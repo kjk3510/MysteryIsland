@@ -50,7 +50,7 @@ private:
 	POINT mLastMousePos;
 
 	//-------------Test---------------------
-	CPlayer mObject;
+	CPlayer mPlayer;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -141,9 +141,8 @@ bool TerrainApp::Init()
 	oii.Mat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	oii.Mat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	oii.Mat.Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
-	XMMATRIX I = XMMatrixTranslation(0.0f, 2.0f, 100.0f);
-	XMStoreFloat4x4(&oii.Pos, I);
-	mObject.InitObject(md3dDevice, oii);
+	oii.Pos = XMFLOAT3(0.0f, 0.0f, -100.0f);
+	mPlayer.InitObject(md3dDevice, oii);
 
 	return true;
 }
@@ -152,7 +151,7 @@ void TerrainApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 3000.0f);
+	mPlayer.GetCamera()->SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 3000.0f);
 }
 
 void TerrainApp::UpdateScene(float dt)
@@ -161,16 +160,16 @@ void TerrainApp::UpdateScene(float dt)
 	// Control the camera.
 	//
 	if( GetAsyncKeyState('W') & 0x8000 )
-		mCam.Walk(10.0f*dt);
+		mPlayer.GetCamera()->Walk(10.0f*dt);
 
 	if( GetAsyncKeyState('S') & 0x8000 )
-		mCam.Walk(-10.0f*dt);
+		mPlayer.GetCamera()->Walk(-10.0f*dt);
 
 	if( GetAsyncKeyState('A') & 0x8000 )
-		mCam.Strafe(-10.0f*dt);
+		mPlayer.GetCamera()->Strafe(-10.0f*dt);
 
 	if( GetAsyncKeyState('D') & 0x8000 )
-		mCam.Strafe(10.0f*dt);
+		mPlayer.GetCamera()->Strafe(10.0f*dt);
 
 	//
 	// Walk/fly mode
@@ -185,12 +184,13 @@ void TerrainApp::UpdateScene(float dt)
 	//
 	if( mWalkCamMode )
 	{
-		XMFLOAT3 camPos = mCam.GetPosition();
+		XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
 		float y = mTerrain.GetHeight(camPos.x, camPos.z);
-		mCam.SetPosition(camPos.x, y + 2.0f, camPos.z);
+		mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
 	}
-
-	mCam.UpdateViewMatrix();
+	mPlayer.InputKeyboardMessage(dt);
+	mPlayer.UpdateObject();
+	mPlayer.GetCamera()->UpdateViewMatrix();
 }
 
 void TerrainApp::DrawScene()
@@ -201,18 +201,18 @@ void TerrainApp::DrawScene()
 	md3dImmediateContext->IASetInputLayout(InputLayouts::Basic32);
     md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mObject.DrawObject(md3dImmediateContext, mCam, mDirLights);
+	mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
 	float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	if( GetAsyncKeyState('1') & 0x8000 )
 		md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
-	mTerrain.Draw(md3dImmediateContext, mCam, mDirLights);
+	mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
 	md3dImmediateContext->RSSetState(0);
 
-	mSky->Draw(md3dImmediateContext, mCam);
+	mSky->Draw(md3dImmediateContext, *mPlayer.GetCamera());
 
 	// restore default states, as the SkyFX changes them in the effect file.
 	md3dImmediateContext->RSSetState(0);
@@ -242,8 +242,13 @@ void TerrainApp::OnMouseMove(WPARAM btnState, int x, int y)
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-		mCam.Pitch(dy);
-		mCam.RotateY(dx);
+		std::cout << "dx : " << dx << std::endl;
+		std::cout << "x : " << x << std::endl;
+		std::cout << "mLastMousePos.x : " << mLastMousePos.x << std::endl;
+
+		mPlayer.GetCamera()->Pitch(dy);
+		mPlayer.GetCamera()->RotateY(dx);
+		mPlayer.SetRotateAngle(dx);
 	}
 
 	mLastMousePos.x = x;
