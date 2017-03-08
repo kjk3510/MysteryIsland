@@ -1,8 +1,1 @@
-﻿  CompletionPortTCPServer.cpp
-c:\users\administrator\documents\visual studio 2015\projects\completionporttcpserver\completionporttcpserver\completionporttcpserver.cpp(82): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: 'inet_ntoa' 선언을 참조하십시오.
-c:\users\administrator\documents\visual studio 2015\projects\completionporttcpserver\completionporttcpserver\completionporttcpserver.cpp(142): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: 'inet_ntoa' 선언을 참조하십시오.
-c:\users\administrator\documents\visual studio 2015\projects\completionporttcpserver\completionporttcpserver\completionporttcpserver.cpp(154): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: 'inet_ntoa' 선언을 참조하십시오.
-  CompletionPortTCPServer.vcxproj -> c:\users\administrator\documents\visual studio 2015\Projects\CompletionPortTCPServer\Debug\CompletionPortTCPServer.exe
+﻿  CompletionPortTCPServer.vcxproj -> D:\MysteryIsland\CompletionPortTCPServer\Debug\CompletionPortTCPServer.exe

@@ -42,8 +42,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\DXSDK\Include;C:\Users\Administrator\Desktop\Dummy\Common %282%29;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Administrator\Desktop\Dummy\Common %282%29;D:\DXSDK\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\DXSDK\Include;D:\MysteryIsland\Dummy\Common %282%29;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\MysteryIsland\Dummy\Common %282%29;D:\DXSDK\Lib\x86;$(LibraryPath)</LibraryPath>
     <ExecutablePath>D:\DXSDK\Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

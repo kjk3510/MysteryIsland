@@ -1,8 +1,1 @@
-﻿  CIocpDemo.cpp
-Effects11d.lib(d3dxGlobal.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(d3dxGlobal.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-Effects11d.lib(EffectAPI.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(EffectAPI.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-Effects11d.lib(EffectLoad.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(EffectLoad.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-Effects11d.lib(EffectNonRuntime.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(EffectNonRuntime.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-Effects11d.lib(EffectReflection.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(EffectReflection.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-Effects11d.lib(EffectRuntime.obj) : warning LNK4099: 'Effects11.pdb' PDB를 'Effects11d.lib(EffectRuntime.obj)' 또는 'C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Effects11.pdb'에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
-  Box.vcxproj -> C:\Users\Administrator\Desktop\Dummy\myBox\Debug\Box.exe
+﻿  Box.vcxproj -> D:\MysteryIsland\Dummy\myBox\Debug\Box.exe
