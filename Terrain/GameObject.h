@@ -5,16 +5,6 @@
 
 struct DirectionalLight;
 
-ostream& operator<<(ostream& os, XMMATRIX m)
-{
-	os << m._11 << " " << m._12 << " " << m._13 << " " << m._14 << endl;
-	os << m._21 << " " << m._22 << " " << m._23 << " " << m._24 << endl;
-	os << m._31 << " " << m._32 << " " << m._33 << " " << m._34 << endl;
-	os << m._41 << " " << m._42 << " " << m._43 << " " << m._44 << endl;
-
-	return os;
-}
-
 class CGameObject
 {
 public:

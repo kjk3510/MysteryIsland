@@ -101,6 +101,7 @@
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="TerrainDemo.cpp" />
     <ClCompile Include="Vertex.cpp" />
+    <ClCompile Include="Water.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Camera.h" />
@@ -122,6 +123,7 @@
     <ClInclude Include="Sky.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Water.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="FX\Basic.fx">

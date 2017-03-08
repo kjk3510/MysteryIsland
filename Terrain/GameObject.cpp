@@ -84,21 +84,24 @@ void CPlayer::InitObject(ID3D11Device* device, const InitInfo& initInfo)
 {
 	CGameObject::InitObject(device, initInfo);
 
-	XMMATRIX r = XMMatrixRotationY(90.0f);
-	cout << r << endl;
-	cout << r._11 << " " << r._12 << " " << r._13 << " " << r._14 << endl;
-	cout << r._21 << " " << r._22 << " " << r._23 << " " << r._24 << endl;
-	cout << r._31 << " " << r._32 << " " << r._33 << " " << r._34 << endl;
-	cout << r._41 << " " << r._42 << " " << r._43 << " " << r._44 << endl;
-	XMStoreFloat4x4(&mWorld, r);
+	XMMATRIX r = XMMatrixRotationY(-90.0f);
+	r = XMMatrixMultiply(r, XMMatrixRotationZ(225.0f));
+	//cout << r << endl;
+	//cout << r._11 << " " << r._12 << " " << r._13 << " " << r._14 << endl;
+	//cout << r._21 << " " << r._22 << " " << r._23 << " " << r._24 << endl;
+	//cout << r._31 << " " << r._32 << " " << r._33 << " " << r._34 << endl;
+	//cout << r._41 << " " << r._42 << " " << r._43 << " " << r._44 << endl;
+	XMMATRIX w = XMLoadFloat4x4(&mWorld);
+	w = XMMatrixMultiply(r, w);
+	XMStoreFloat4x4(&mWorld, w);
 
-	mCam.SetPosition(0.0f, 10.0f, -130.0f);
-	mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	//mCam.SetPosition(0.0f, 10.0f, -130.0f);
+	//mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
 }
 
 void CPlayer::UpdateObject()
 {
-	mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	//mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 	//XMMATRIX r = XMMatrixRotationY(mAngle);
 
