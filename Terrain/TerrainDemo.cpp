@@ -122,23 +122,23 @@ bool TerrainApp::Init()
 	mSky = new Sky(md3dDevice, L"Textures/grasscube1024.dds", 5000.0f);
 
 	Terrain::InitInfo tii;
-	tii.HeightMapFilename = L"Textures/terrain3.raw";
+	tii.HeightMapFilename = L"Textures/terrain.raw";
 	tii.LayerMapFilename0 = L"Textures/grass.dds";
 	tii.LayerMapFilename1 = L"Textures/darkdirt.dds";
 	tii.LayerMapFilename2 = L"Textures/stone.dds";
 	tii.LayerMapFilename3 = L"Textures/lightdirt.dds";
 	tii.LayerMapFilename4 = L"Textures/snow.dds";
 	tii.BlendMapFilename = L"Textures/blend.dds";
-	//tii.HeightScale = 50.0f;
-	//tii.HeightmapWidth = 2049;
-	//tii.HeightmapHeight = 2049;
-	tii.HeightScale = 128.0f;
-	tii.HeightmapWidth = 1024;
-	tii.HeightmapHeight = 1024;
+	tii.HeightScale = 50.0f;
+	tii.HeightmapWidth = 2049;
+	tii.HeightmapHeight = 2049;
+	//tii.HeightScale = 128.0f;
+	//tii.HeightmapWidth = 1024;
+	//tii.HeightmapHeight = 1024;
 	tii.CellSpacing = 0.5f;
 
 	mTerrain.Init(md3dDevice, md3dImmediateContext, tii);
-	mWater.InitWater(md3dDevice, 100, 100, 1.0f);
+	mWater.InitWater(md3dDevice, 320, 320, 5.0f);
 	//---------Test-------------
 	//CGameObject::InitInfo oii;
 	//oii.FbxFileName = "crawler.fbx";
@@ -161,6 +161,45 @@ void TerrainApp::OnResize()
 
 void TerrainApp::UpdateScene(float dt)
 {
+	if (GetAsyncKeyState('R') & 0x8000)
+		mDirLights[0].Ambient.x += 0.1;
+	if (GetAsyncKeyState('F') & 0x8000)
+		mDirLights[0].Ambient.x -= 0.1;
+	if (GetAsyncKeyState('T') & 0x8000)
+		mDirLights[0].Diffuse.x += 0.1;
+	if (GetAsyncKeyState('G') & 0x8000)
+		mDirLights[0].Diffuse.x -= 0.1;
+	if (GetAsyncKeyState('Y') & 0x8000)
+		mDirLights[0].Specular.x += 0.1;
+	if (GetAsyncKeyState('H') & 0x8000)
+		mDirLights[0].Specular.x -= 0.1;
+
+	//if (GetAsyncKeyState('U') & 0x8000)
+	//	mDirLights[1].Ambient.x += 0.1;
+	//if (GetAsyncKeyState('J') & 0x8000)
+	//	mDirLights[1].Ambient.x -= 0.1;
+	//if (GetAsyncKeyState('I') & 0x8000)
+	//	mDirLights[1].Diffuse.x += 0.1;
+	//if (GetAsyncKeyState('K') & 0x8000)
+	//	mDirLights[1].Diffuse.x -= 0.1;
+	//if (GetAsyncKeyState('O') & 0x8000)
+	//	mDirLights[1].Specular.x += 0.1;
+	//if (GetAsyncKeyState('L') & 0x8000)
+	//	mDirLights[1].Specular.x -= 0.1;
+
+	//if (GetAsyncKeyState('Z') & 0x8000)
+	//	mDirLights[2].Ambient.x += 0.1;
+	//if (GetAsyncKeyState('X') & 0x8000)
+	//	mDirLights[2].Ambient.x -= 0.1;
+	//if (GetAsyncKeyState('C') & 0x8000)
+	//	mDirLights[2].Diffuse.x += 0.1;
+	//if (GetAsyncKeyState('V') & 0x8000)
+	//	mDirLights[2].Diffuse.x -= 0.1;
+	//if (GetAsyncKeyState('B') & 0x8000)
+	//	mDirLights[2].Specular.x += 0.1;
+	//if (GetAsyncKeyState('N') & 0x8000)
+	//	mDirLights[2].Specular.x -= 0.1;
+
 	//
 	// Control the camera.
 	//
@@ -176,17 +215,17 @@ void TerrainApp::UpdateScene(float dt)
 	//if( GetAsyncKeyState('D') & 0x8000 )
 	//	mPlayer.GetCamera()->Strafe(10.0f*dt);
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCam.Walk(20.0f*dt);
+		mCam.Walk(100.0f*dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-20.0f*dt);
+		mCam.Walk(-100.0f*dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.Strafe(-20.0f*dt);
+		mCam.Strafe(-100.0f*dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCam.Strafe(20.0f*dt);
-
+		mCam.Strafe(100.0f*dt);
+	//cout << mCam.GetPosition().x << " " << mCam.GetPosition().y << " " << mCam.GetPosition().z << endl;
 	//
 	// Walk/fly mode
 	//
@@ -210,6 +249,7 @@ void TerrainApp::UpdateScene(float dt)
 	//mPlayer.UpdateObject();
 	//mPlayer.GetCamera()->UpdateViewMatrix();
 	mCam.UpdateViewMatrix();
+	mWater.UpdateWater(md3dImmediateContext, dt);
 }
 
 void TerrainApp::DrawScene()
@@ -228,12 +268,13 @@ void TerrainApp::DrawScene()
 		md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 	//mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
-	//mTerrain.Draw(md3dImmediateContext, mCam, mDirLights);
+	mTerrain.Draw(md3dImmediateContext, mCam, mDirLights);
 
 	md3dImmediateContext->RSSetState(0);
 
 	//mSky->Draw(md3dImmediateContext, *mPlayer.GetCamera());
 	mSky->Draw(md3dImmediateContext, mCam);
+
 	mWater.Draw(md3dImmediateContext, mCam, mDirLights);
 
 	// restore default states, as the SkyFX changes them in the effect file.

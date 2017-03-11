@@ -2,11 +2,13 @@
 
 
 
-CWater::CWater() : mVB(0), mIB(0), mMapSRV(0), mTexOffset(0.0f, 0.0f), mTriangles(0)
+CWater::CWater() : mVB(0), mIB(0), mMapSRV(0), mTexOffset(0.0f, 0.0f), mVertexs(0), mTriangles(0),
+mWidth(0), mDepth(0), mWavePos(0)
 {
 	XMMATRIX I = XMMatrixIdentity();
 	XMStoreFloat4x4(&mWorld, I);
 	XMStoreFloat4x4(&mTexTransform, I);
+	mWorld._42 = -2.0f;
 
 	mMat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mMat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -16,6 +18,8 @@ CWater::CWater() : mVB(0), mIB(0), mMapSRV(0), mTexOffset(0.0f, 0.0f), mTriangle
 
 CWater::~CWater()
 {
+	delete[] mWavePos;
+
 	ReleaseCOM(mVB);
 	ReleaseCOM(mIB);
 	ReleaseCOM(mMapSRV);
@@ -23,13 +27,15 @@ CWater::~CWater()
 
 void CWater::BuildWaterGeometryBuffers(ID3D11Device* pd3dDevice, UINT m, UINT n, float dx)
 {
-	UINT nVertex = m * n;
+	mVertexs = m * n;
+	mWidth = n * dx;
+	mDepth = m * dx;
 
 	float halfWidth = (n - 1)*dx*0.5f;
 	float halfDepth = (m - 1)*dx*0.5f;
 
 	std::vector<Vertex::Basic32> vertices;
-	vertices.resize(nVertex);
+	vertices.resize(mVertexs);
 
 	for (UINT i = 0; i < m; ++i)
 	{
@@ -39,6 +45,7 @@ void CWater::BuildWaterGeometryBuffers(ID3D11Device* pd3dDevice, UINT m, UINT n,
 			float x = -halfWidth + j*dx;
 
 			vertices[i*n + j].Pos = XMFLOAT3(x, 0.0f, z);
+			mWavePos[i*n + j]     = XMFLOAT3(x, 0.0f, z);
 			vertices[i*n + j].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
 			vertices[i*n + j].Tex.x = 0.5f + x / m * dx;
 			vertices[i*n + j].Tex.y = 0.5f - z / n * dx;
@@ -47,7 +54,7 @@ void CWater::BuildWaterGeometryBuffers(ID3D11Device* pd3dDevice, UINT m, UINT n,
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_DYNAMIC;
-	vbd.ByteWidth = sizeof(Vertex::Basic32) * nVertex;
+	vbd.ByteWidth = sizeof(Vertex::Basic32) * mVertexs;
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vbd.MiscFlags = 0;
@@ -92,13 +99,23 @@ void CWater::InitWater(ID3D11Device* pd3dDevice, UINT m, UINT n, float dx)
 	HR(D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
 		L"Textures/water2.dds", 0, 0, &mMapSRV, 0));
 
+	delete[] mWavePos;
+	mWavePos = new XMFLOAT3[m*n];
+
 	BuildWaterGeometryBuffers(pd3dDevice, m, n, dx);
+}
 
-	XMMATRIX wavesScale = XMMatrixScaling(5.0f, 5.0f, 0.0f);
+void CWater::UpdateWater(ID3D11DeviceContext* pd3dImmediateContext, float dt)
+{
+	XMMATRIX wavesScale = XMMatrixScaling(2.0f, 2.0f, 0.0f);
 
-	// Translate texture over time.
-	mTexOffset.y += 0.05f;
-	mTexOffset.x += 0.1f;
+	//// Translate texture over time.
+	static float fMovement = 0.0f;
+	if (fMovement > 360.0f) fMovement = 0;
+	fMovement += 0.5;
+	std::cout << sin(XMConvertToRadians(fMovement)) << std::endl;
+	mTexOffset.y += sin(XMConvertToRadians(fMovement)) * dt * 0.1;
+	mTexOffset.x += sin(XMConvertToRadians(fMovement)) * dt * 0.1;
 	XMMATRIX wavesOffset = XMMatrixTranslation(mTexOffset.x, mTexOffset.y, 0.0f);
 
 	// Combine scale and translation.
