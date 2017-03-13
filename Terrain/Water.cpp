@@ -1,4 +1,5 @@
 #include "Water.h"
+#include "RenderStates.h"
 
 
 
@@ -11,7 +12,7 @@ mWidth(0), mDepth(0), mWavePos(0)
 	mWorld._42 = -2.0f;
 
 	mMat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mMat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mMat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
 	mMat.Specular = XMFLOAT4(0.8f, 0.8f, 0.8f, 32.0f);
 }
 
@@ -130,6 +131,8 @@ void CWater::Draw(ID3D11DeviceContext* pd3dImmediateContext, Camera pCamera, Dir
 	UINT stride = sizeof(Vertex::Basic32);
 	UINT offset = 0;
 
+	float blendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 	Effects::BasicFX->SetDirLights(mDirLights);
 
 	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light3TexTech;
@@ -156,7 +159,14 @@ void CWater::Draw(ID3D11DeviceContext* pd3dImmediateContext, Camera pCamera, Dir
 		Effects::BasicFX->SetMaterial(mMat);
 		Effects::BasicFX->SetDiffuseMap(mMapSRV);
 
+
+		pd3dImmediateContext->OMSetBlendState(RenderStates::TransparentBS, blendFactor, 0xffffffff);
 		activeTech->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
-		pd3dImmediateContext->DrawIndexed(mTriangles * 3, 0, 0);
+		pd3dImmediateContext->DrawIndexed(3 * mTriangles, 0, 0);
+
+		// Restore default blend state
+		pd3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+
+		
 	}
 }

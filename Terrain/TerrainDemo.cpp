@@ -22,6 +22,14 @@
 #include "Terrain.h"
 #include "GameObject.h"
 #include "Water.h"
+#include "RenderStates.h"
+
+enum RenderOptions
+{
+	Lighting = 0,
+	Textures = 1,
+	TexturesAndFog = 2
+};
  
 class TerrainApp : public D3DApp
 {
@@ -52,6 +60,7 @@ private:
 
 	//-------------Test---------------------
 	CWater mWater;
+	RenderOptions mRenderOptions;
 	//CPlayer mPlayer;
 };
 
@@ -72,7 +81,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 }
 
 TerrainApp::TerrainApp(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mWalkCamMode(true)
+: D3DApp(hInstance), mSky(0), mWalkCamMode(true), mRenderOptions(RenderOptions::TexturesAndFog)
 {
 	mMainWndCaption = L"Terrain Demo";
 	mEnable4xMsaa = false;
@@ -262,7 +271,6 @@ void TerrainApp::DrawScene()
 
 	//mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
-	float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	if( GetAsyncKeyState('1') & 0x8000 )
 		md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
