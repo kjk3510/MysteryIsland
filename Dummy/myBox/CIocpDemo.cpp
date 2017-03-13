@@ -19,7 +19,11 @@ DWORD WINAPI ClientMain(LPVOID arg);
 
 HWND handle = NULL; // 윈도우핸들
 SOCKET sock; // 소켓
-char buf[BUFSIZE + 1]; // 데이터 송수신 버퍼
+//char buf[BUFSIZE + 1]; // 데이터 송수신 버퍼 -> WSABUF 구조체로 새로 생성
+WSABUF send_buf;
+char send_buffer[BUFSIZE];
+WSABUF recv_buf;
+char recv_buffer[BUFSIZE];
 					  
 // 소켓 함수 오류 출력 후 종료
 void err_quit(char *msg)
@@ -51,6 +55,7 @@ void err_display(char *msg)
 DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
+	DWORD iobyte, ioflag = 0;
 
 	// 윈속 초기화
 	WSADATA wsa;
@@ -70,7 +75,18 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
 
 	// 클라이언트는 WSAAsyncSelect 모델을 사용하는게 좋다고 들음. 왜였지?
-	WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ)
+	WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
+
+	// 송수신버퍼 등록
+	send_buf.buf = send_buffer;
+	send_buf.len = BUFSIZE;
+	recv_buf.buf = recv_buffer;
+	recv_buf.len = BUFSIZE;
+
+
+	retval = WSASend(sock, &send_buf, 1, &iobyte, 0, NULL, NULL);
+
+	retval = WSARecv(sock, &recv_buf, 1, &iobyte, &ioflag, NULL, NULL);
 
 	return 0;
 }
