@@ -54,9 +54,6 @@ void err_display(char *msg)
 
 DWORD WINAPI ClientMain(LPVOID arg)
 {
-	int retval;
-	DWORD iobyte, ioflag = 0;
-
 	// 윈속 초기화
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -72,7 +69,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
-	retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
+	int retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
 
 	// 클라이언트는 WSAAsyncSelect 모델을 사용하는게 좋다고 들음. 왜였지?
 	WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
@@ -82,11 +79,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	send_buf.len = BUFSIZE;
 	recv_buf.buf = recv_buffer;
 	recv_buf.len = BUFSIZE;
-
-
-	retval = WSASend(sock, &send_buf, 1, &iobyte, 0, NULL, NULL);
-
-	retval = WSARecv(sock, &recv_buf, 1, &iobyte, &ioflag, NULL, NULL);
 
 	return 0;
 }
