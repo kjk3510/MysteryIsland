@@ -1,6 +1,7 @@
 #include "GameObject.h"
 #include "Effects.h"
 #include "GeometryGenerator.h"
+#include "RenderStates.h"
 
 CGameObject::CGameObject() : mVB(0), mIB(0), mDiffuseMapSRV(0)
 {
@@ -28,6 +29,10 @@ void CGameObject::InitObject(ID3D11Device* device, const InitInfo& initInfo)
 	mMat.Ambient = initInfo.Mat.Ambient;
 	mMat.Diffuse = initInfo.Mat.Diffuse;
 	mMat.Specular = initInfo.Mat.Specular;
+
+	mShadowMat.Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	mShadowMat.Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
+	mShadowMat.Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
 
 	HR(D3DX11CreateShaderResourceViewFromFile(device,
 		initInfo.TextureName.c_str(), 0, 0, &mDiffuseMapSRV, 0));
@@ -103,14 +108,18 @@ void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera
 	UINT stride = sizeof(Vertex::Basic32);
 	UINT offset = 0;
 
-	ID3DX11EffectTechnique* boxTech;
-	boxTech = Effects::BasicFX->Light2TexTech;
+	float blendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	ID3DX11EffectTechnique* ObjectTech;
+	ObjectTech = Effects::BasicFX->Light2TexTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	boxTech->GetDesc(&techDesc);
+	ObjectTech->GetDesc(&techDesc);
 
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
+		ID3DX11EffectPass* pass = ObjectTech->GetPassByIndex(p);
+
 		pd3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 		pd3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
 
@@ -126,45 +135,43 @@ void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera
 		Effects::BasicFX->SetMaterial(mMat);
 		Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
 
-		boxTech->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+		pass->Apply(0, pd3dImmediateContext);
 		pd3dImmediateContext->DrawIndexed(36, 0, 0);
 	}
-	//dc->IASetInputLayout(InputLayouts::Fbx);
-	//dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	//UINT stride = sizeof(Vertex::Basic32);
-	//UINT offset = 0;
+	ID3DX11EffectTechnique* shadowTech;
+	shadowTech = Effects::BasicFX->Light3Tech;
 
-	//XMMATRIX viewProj = cam.ViewProj();
+	shadowTech->GetDesc(&techDesc);
+	for (UINT p = 0; p < techDesc.Passes; ++p)
+	{
+		ID3DX11EffectPass* pass = shadowTech->GetPassByIndex(p);
 
-	//// Set per frame constants.
-	//Effects::FbxFX->SetDirLights(lights);
-	//Effects::FbxFX->SetEyePosW(cam.GetPosition());
+		pd3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+		pd3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
 
-	//dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
-	//dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+		XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
+		XMVECTOR toMainLight = -XMLoadFloat3(&lights[0].Direction);
+		XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
+		XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
 
-	//// Draw the box.
-	//XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	//XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-	//XMMATRIX worldViewProj = world*viewProj;
+		XMMATRIX world = XMLoadFloat4x4(&mWorld)*S*shadowOffsetY;
+		XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+		XMMATRIX worldViewProj = world * mCam.ViewProj();
 
-	//Effects::FbxFX->SetWorldInvTranspose(worldInvTranspose);
-	//Effects::FbxFX->SetWorldViewProj(worldViewProj);
-	//Effects::FbxFX->SetTexTransform(XMMatrixIdentity());
-	//Effects::FbxFX->SetMaterial(mMat);
-	//Effects::FbxFX->SetDiffuseMap(mDiffuseMapSRV);
+		Effects::BasicFX->SetWorld(world);
+		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		Effects::BasicFX->SetMaterial(mShadowMat);
 
-	//ID3DX11EffectTechnique* activeTech = Effects::FbxFX->Light2TexTech;
+		pd3dImmediateContext->OMSetDepthStencilState(RenderStates::NoDoubleBlendDSS, 0);
+		pass->Apply(0, pd3dImmediateContext);
+		pd3dImmediateContext->DrawIndexed(36, 0, 0);
 
-	//D3DX11_TECHNIQUE_DESC techDesc;
-	//activeTech->GetDesc(&techDesc);
-
-	//for (UINT p = 0; p < techDesc.Passes; ++p)
-	//{
-	//	activeTech->GetPassByIndex(p)->Apply(0, dc);
-	//	dc->DrawIndexed(Index.size(), 0, 0);
-	//}
+		// Restore default states.
+		pd3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+		pd3dImmediateContext->OMSetDepthStencilState(0, 0);
+	}
 }
 
 void CPlayer::BuildGeometryBuffers(ID3D11Device* pd3dDevice)

@@ -17,6 +17,7 @@ public:
 protected:
 	ID3D11ShaderResourceView* mDiffuseMapSRV;
 	Material mMat;
+	Material mShadowMat;
 
 	XMFLOAT4X4 mWorld;
 
