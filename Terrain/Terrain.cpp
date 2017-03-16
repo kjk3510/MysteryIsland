@@ -110,12 +110,18 @@ void Terrain::Init(ID3D11Device* device, ID3D11DeviceContext* dc, const InitInfo
 	mNumPatchVertices  = mNumPatchVertRows*mNumPatchVertCols;
 	mNumPatchQuadFaces = (mNumPatchVertRows-1)*(mNumPatchVertCols-1);
 
+	std::cout << "터레인 로드중" << std::endl;
 	LoadHeightmap();
+	std::cout << "터레인 스무스 중" << std::endl;
 	Smooth();
+	std::cout << "바운드Y 계산중 중" << std::endl;
 	CalcAllPatchBoundsY();
 
+	std::cout << "VB초기화 중" << std::endl;
 	BuildQuadPatchVB(device);
+	std::cout << "IB초기화 중" << std::endl;
 	BuildQuadPatchIB(device);
+	std::cout << "텍스쳐 입히는 중" << std::endl;
 	BuildHeightmapSRV(device);
 
 	std::vector<std::wstring> layerFilenames;

@@ -10,16 +10,12 @@ class CGameObject
 public:
 	struct InitInfo
 	{
-		char* FbxFileName;
-		std::wstring  FbxTextureName;
+		std::wstring  TextureName;
 		Material Mat;
 		XMFLOAT3 Pos;
 	};
 protected:
-	FbxLoader FbxLoader;
-	
 	ID3D11ShaderResourceView* mDiffuseMapSRV;
-	
 	Material mMat;
 
 	XMFLOAT4X4 mWorld;
@@ -27,17 +23,14 @@ protected:
 	ID3D11Buffer* mVB;
 	ID3D11Buffer* mIB;
 
-	vector <Vertex::Basic32> Pos;
-	vector <UINT> Index;
-
 public:
 	CGameObject();
 	~CGameObject();
 	
-	virtual void InitObject(ID3D11Device* device, const InitInfo& initInfo);
-	virtual void UpdateObject();
+	virtual void InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo);
+	virtual void UpdateObject(float dt);
 	virtual void DrawObject(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3]);
-	virtual void Move(XMFLOAT3 dir, float dt);
+	virtual void BuildGeometryBuffers(ID3D11Device* pd3dDevice);
 };
 
 #define FRONT XMFLOAT3(0.0f, 0.0f, 1.0f)
@@ -48,8 +41,9 @@ public:
 class CPlayer : public CGameObject
 {
 private:
-	float mMoveSpeed;
 	Camera mCam;
+	
+	float mMoveSpeed;
 	float mAngle;
 
 public:
@@ -57,13 +51,16 @@ public:
 	~CPlayer();
 
 	Camera* GetCamera() { return &mCam; };
-	void InitObject(ID3D11Device* device, const InitInfo& initInfo);
-	void UpdateObject();
-	void DrawObject(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3]);
-	void Move(XMFLOAT3 dir, float dt);
-	void InputKeyboardMessage(float dt);
-	void SetRotateAngle(float angle) { mAngle = angle; }
+	XMFLOAT3 GetPosition();
+	void InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo);
+	void UpdateObject(float dt, float height);
+	void DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3]);
+	void BuildGeometryBuffers(ID3D11Device* pd3dDevice);
+	void RotateY(float angle);
+	//void Move(XMFLOAT3 dir, float dt);
+	//void InputKeyboardMessage(float dt);
+	//void SetRotateAngle(float angle) { mAngle = angle; }
 
-	const XMFLOAT3 GetPos() { return XMFLOAT3(mWorld._41, mWorld._42, mWorld._43); }
+	//const XMFLOAT3 GetPos() { return XMFLOAT3(mWorld._41, mWorld._42, mWorld._43); }
 };
 

@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include "Effects.h"
+#include "GeometryGenerator.h"
 
 CGameObject::CGameObject() : mVB(0), mIB(0), mDiffuseMapSRV(0)
 {
@@ -27,34 +28,12 @@ void CGameObject::InitObject(ID3D11Device* device, const InitInfo& initInfo)
 	mMat.Ambient = initInfo.Mat.Ambient;
 	mMat.Diffuse = initInfo.Mat.Diffuse;
 	mMat.Specular = initInfo.Mat.Specular;
-	
-	FbxLoader.LoadModel(initInfo.FbxFileName, Pos, Index);
 
 	HR(D3DX11CreateShaderResourceViewFromFile(device,
-		initInfo.FbxTextureName.c_str(), 0, 0, &mDiffuseMapSRV, 0));
-
-	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = sizeof(Vertex::Basic32) * Pos.size();
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags = 0;
-	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = &Pos[0];
-	HR(device->CreateBuffer(&vbd, &vinitData, &mVB));
-
-	D3D11_BUFFER_DESC ibd;
-	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(UINT) * Index.size();
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags = 0;
-	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &Index[0];
-	HR(device->CreateBuffer(&ibd, &iinitData, &mIB));
+		initInfo.TextureName.c_str(), 0, 0, &mDiffuseMapSRV, 0));
 }
 
-void CGameObject::UpdateObject()
+void CGameObject::UpdateObject(float dt)
 {
 
 }
@@ -64,10 +43,11 @@ void CGameObject::DrawObject(ID3D11DeviceContext* dc, const Camera& cam, Directi
 
 }
 
-void CGameObject::Move(XMFLOAT3 dir, float dt)
+void CGameObject::BuildGeometryBuffers(ID3D11Device* pd3dDevice)
 {
 
 }
+
 
 CPlayer::CPlayer() : mMoveSpeed(1.0f), mAngle(0.0f)
 {
@@ -80,100 +60,199 @@ CPlayer::~CPlayer()
 
 }
 
-void CPlayer::InitObject(ID3D11Device* device, const InitInfo& initInfo)
+void CPlayer::InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo)
 {
-	CGameObject::InitObject(device, initInfo);
+	CGameObject::InitObject(pd3dDevice, initInfo);
 
-	XMMATRIX r = XMMatrixRotationY(-90.0f);
-	r = XMMatrixMultiply(r, XMMatrixRotationZ(225.0f));
-	//cout << r << endl;
-	//cout << r._11 << " " << r._12 << " " << r._13 << " " << r._14 << endl;
-	//cout << r._21 << " " << r._22 << " " << r._23 << " " << r._24 << endl;
-	//cout << r._31 << " " << r._32 << " " << r._33 << " " << r._34 << endl;
-	//cout << r._41 << " " << r._42 << " " << r._43 << " " << r._44 << endl;
-	XMMATRIX w = XMLoadFloat4x4(&mWorld);
-	w = XMMatrixMultiply(r, w);
-	XMStoreFloat4x4(&mWorld, w);
+	BuildGeometryBuffers(pd3dDevice);
 
-	//mCam.SetPosition(0.0f, 10.0f, -130.0f);
-	//mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	mCam.SetPosition(0.0f, 2.0f, 100.0f);
 }
 
-void CPlayer::UpdateObject()
+void CPlayer::UpdateObject(float dt, float height)
 {
-	//mCam.LookAt(mCam.GetPosition(), GetPos(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	XMMATRIX W = XMLoadFloat4x4(&mWorld);
 
-	//XMMATRIX r = XMMatrixRotationY(mAngle);
-
-	//XMMATRIX w = XMLoadFloat4x4(&mWorld);
-	//w = XMMatrixTranslation(mPosition.x, mPosition.y, mPosition.z);
-	//XMStoreFloat4x4(&mWorld, XMMatrixMultiply(r, w));
+	if (GetAsyncKeyState('W') & 0x8000) {
+		mCam.Walk(100.0f*dt);
+		XMMATRIX T = XMMatrixTranslation(0, 0, 100.0f*dt);
+		XMStoreFloat4x4(&mWorld, T*W);
+	}
+	if (GetAsyncKeyState('S') & 0x8000) {
+		mCam.Walk(-100.0f*dt);
+		XMMATRIX T = XMMatrixTranslation(0, 0, -100.0f*dt);
+		XMStoreFloat4x4(&mWorld, T*W);
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		mCam.Strafe(-100.0f*dt);
+		XMMATRIX T = XMMatrixTranslation(-100.0f*dt, 0, 0);
+		XMStoreFloat4x4(&mWorld, T*W);
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		mCam.Strafe(100.0f*dt);
+		XMMATRIX T = XMMatrixTranslation(100.0f*dt, 0, 0);
+		XMStoreFloat4x4(&mWorld, T*W);
+	}
+	mWorld._42 = height;
+	mCam.SetPosition(mCam.GetPosition().x, height + 10.0f, mCam.GetPosition().z);
+	mCam.UpdateViewMatrix();
 }
 
-void CPlayer::DrawObject(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3])
+void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3])
 {
-	dc->IASetInputLayout(InputLayouts::Fbx);
-	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	UINT stride = sizeof(Vertex::Basic32);
 	UINT offset = 0;
 
-	XMMATRIX viewProj = cam.ViewProj();
-
-	// Set per frame constants.
-	Effects::FbxFX->SetDirLights(lights);
-	Effects::FbxFX->SetEyePosW(cam.GetPosition());
-
-	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
-	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
-
-	// Draw the box.
-	XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-	XMMATRIX worldViewProj = world*viewProj;
-
-	Effects::FbxFX->SetWorldInvTranspose(worldInvTranspose);
-	Effects::FbxFX->SetWorldViewProj(worldViewProj);
-	Effects::FbxFX->SetTexTransform(XMMatrixIdentity());
-	Effects::FbxFX->SetMaterial(mMat);
-	Effects::FbxFX->SetDiffuseMap(mDiffuseMapSRV);
-
-	ID3DX11EffectTechnique* activeTech = Effects::FbxFX->Light2TexTech;
+	ID3DX11EffectTechnique* boxTech;
+	boxTech = Effects::BasicFX->Light2TexTech;
 
 	D3DX11_TECHNIQUE_DESC techDesc;
-	activeTech->GetDesc(&techDesc);
+	boxTech->GetDesc(&techDesc);
 
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		activeTech->GetPassByIndex(p)->Apply(0, dc);
-		dc->DrawIndexed(Index.size(), 0, 0);
+		pd3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+		pd3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+		// Set per object constants.
+		XMMATRIX world = XMLoadFloat4x4(&mWorld);
+		XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+		XMMATRIX worldViewProj = world*mCam.ViewProj();
+
+		Effects::BasicFX->SetWorld(world);
+		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+		Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		Effects::BasicFX->SetTexTransform(XMMatrixIdentity());
+		Effects::BasicFX->SetMaterial(mMat);
+		Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
+
+		boxTech->GetPassByIndex(p)->Apply(0, pd3dImmediateContext);
+		pd3dImmediateContext->DrawIndexed(36, 0, 0);
 	}
+	//dc->IASetInputLayout(InputLayouts::Fbx);
+	//dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//UINT stride = sizeof(Vertex::Basic32);
+	//UINT offset = 0;
+
+	//XMMATRIX viewProj = cam.ViewProj();
+
+	//// Set per frame constants.
+	//Effects::FbxFX->SetDirLights(lights);
+	//Effects::FbxFX->SetEyePosW(cam.GetPosition());
+
+	//dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	//dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+	//// Draw the box.
+	//XMMATRIX world = XMLoadFloat4x4(&mWorld);
+	//XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+	//XMMATRIX worldViewProj = world*viewProj;
+
+	//Effects::FbxFX->SetWorldInvTranspose(worldInvTranspose);
+	//Effects::FbxFX->SetWorldViewProj(worldViewProj);
+	//Effects::FbxFX->SetTexTransform(XMMatrixIdentity());
+	//Effects::FbxFX->SetMaterial(mMat);
+	//Effects::FbxFX->SetDiffuseMap(mDiffuseMapSRV);
+
+	//ID3DX11EffectTechnique* activeTech = Effects::FbxFX->Light2TexTech;
+
+	//D3DX11_TECHNIQUE_DESC techDesc;
+	//activeTech->GetDesc(&techDesc);
+
+	//for (UINT p = 0; p < techDesc.Passes; ++p)
+	//{
+	//	activeTech->GetPassByIndex(p)->Apply(0, dc);
+	//	dc->DrawIndexed(Index.size(), 0, 0);
+	//}
 }
 
-void CPlayer::Move(XMFLOAT3 dir, float dt)
+void CPlayer::BuildGeometryBuffers(ID3D11Device* pd3dDevice)
 {
-	XMVECTOR s = XMVectorReplicate(dt * 10.0f);
-	XMVECTOR l = XMLoadFloat3(&dir);
-	//XMVECTOR p = XMLoadFloat3(&mPosition);
-	//XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, l, p));
+	GeometryGenerator::MeshData box;
+
+	GeometryGenerator geoGen;
+	geoGen.CreateBox(5.0f, 5.0f, 5.0f, box);
+
+	std::vector<Vertex::Basic32> vertices(box.Vertices.size());
+
+	for (UINT i = 0; i < box.Vertices.size(); ++i)
+	{
+		vertices[i].Pos = box.Vertices[i].Position;
+		vertices[i].Normal = box.Vertices[i].Normal;
+		vertices[i].Tex = box.Vertices[i].TexC;
+	}
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(Vertex::Basic32) * box.Vertices.size();
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = &vertices[0];
+	HR(pd3dDevice->CreateBuffer(&vbd, &vinitData, &mVB));
+
+	//
+	// Pack the indices of all the meshes into one index buffer.
+	//
+
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(UINT) * box.Indices.size();
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &box.Indices[0];
+	HR(pd3dDevice->CreateBuffer(&ibd, &iinitData, &mIB));
 }
 
-void CPlayer::InputKeyboardMessage(float dt)
+void CPlayer::RotateY(float angle)
 {
-	if (GetAsyncKeyState('W') & 0x8000)
-		Move(FRONT, dt);
+	XMMATRIX R = XMMatrixRotationY(angle);
+	XMMATRIX W = XMLoadFloat4x4(&mWorld);
+	XMStoreFloat4x4(&mWorld, R*W);
 
-	if (GetAsyncKeyState('S') & 0x8000)
-		Move(BACK, dt);
-
-	if (GetAsyncKeyState('A') & 0x8000)
-		Move(LEFT, dt);
-
-	if (GetAsyncKeyState('D') & 0x8000)
-		Move(RIGHT, dt);
+	mCam.RevolvePlayer(angle, GetPosition());
+	//mCam.RotateY(angle);
 }
 
-void RotateYObject(float angle)
+XMFLOAT3 CPlayer::GetPosition()
 {
-
+	//XMMATRIX W = XMLoadFloat4x4(&mWorld);
+	//XMVECTOR P = XMVectorSet(0, 0, 0, 1);
+	//XMFLOAT3 Pos;
+	//XMStoreFloat3(&Pos, XMVector3TransformCoord(P, W));
+	//return Pos;
+	XMFLOAT3 Pos(mWorld._41, mWorld._42, mWorld._43);
+	return Pos;
 }
+
+//void CPlayer::Move(XMFLOAT3 dir, float dt)
+//{
+//	XMVECTOR s = XMVectorReplicate(dt * 10.0f);
+//	XMVECTOR l = XMLoadFloat3(&dir);
+//	//XMVECTOR p = XMLoadFloat3(&mPosition);
+//	//XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, l, p));
+//}
+//
+//void CPlayer::InputKeyboardMessage(float dt)
+//{
+//	if (GetAsyncKeyState('W') & 0x8000)
+//		Move(FRONT, dt);
+//
+//	if (GetAsyncKeyState('S') & 0x8000)
+//		Move(BACK, dt);
+//
+//	if (GetAsyncKeyState('A') & 0x8000)
+//		Move(LEFT, dt);
+//
+//	if (GetAsyncKeyState('D') & 0x8000)
+//		Move(RIGHT, dt);
+//}
+//
+//void RotateYObject(float angle)
+//{
+//
+//}

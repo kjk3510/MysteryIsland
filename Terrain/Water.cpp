@@ -114,7 +114,7 @@ void CWater::UpdateWater(ID3D11DeviceContext* pd3dImmediateContext, float dt)
 	static float fMovement = 0.0f;
 	if (fMovement > 360.0f) fMovement = 0;
 	fMovement += 0.5;
-	std::cout << sin(XMConvertToRadians(fMovement)) << std::endl;
+	//std::cout << sin(XMConvertToRadians(fMovement)) << std::endl;
 	mTexOffset.y += sin(XMConvertToRadians(fMovement)) * dt * 0.1;
 	mTexOffset.x += sin(XMConvertToRadians(fMovement)) * dt * 0.1;
 	XMMATRIX wavesOffset = XMMatrixTranslation(mTexOffset.x, mTexOffset.y, 0.0f);

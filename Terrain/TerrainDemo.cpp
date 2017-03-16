@@ -52,7 +52,7 @@ private:
 
 	DirectionalLight mDirLights[3];
 
-	Camera mCam;
+	//Camera mCam;
 
 	bool mWalkCamMode;
 
@@ -61,7 +61,7 @@ private:
 	//-------------Test---------------------
 	CWater mWater;
 	RenderOptions mRenderOptions;
-	//CPlayer mPlayer;
+	CPlayer mPlayer;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -83,13 +83,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 TerrainApp::TerrainApp(HINSTANCE hInstance)
 : D3DApp(hInstance), mSky(0), mWalkCamMode(true), mRenderOptions(RenderOptions::TexturesAndFog)
 {
-	mMainWndCaption = L"Terrain Demo";
+	mMainWndCaption = L"Mystery Island";
 	mEnable4xMsaa = false;
 
 	mLastMousePos.x = 0;
 	mLastMousePos.y = 0;
 
-	mCam.SetPosition(0.0f, 2.0f, 100.0f);
+	//mCam.SetPosition(0.0f, 2.0f, 100.0f);
 
 	mDirLights[0].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	mDirLights[0].Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -129,7 +129,7 @@ bool TerrainApp::Init()
 	RenderStates::InitAll(md3dDevice);
 
 	mSky = new Sky(md3dDevice, L"Textures/grasscube1024.dds", 5000.0f);
-
+	std::cout << "스카이박스 초기화" << std::endl;
 	Terrain::InitInfo tii;
 	tii.HeightMapFilename = L"Textures/terrain.raw";
 	tii.LayerMapFilename0 = L"Textures/grass.dds";
@@ -147,16 +147,18 @@ bool TerrainApp::Init()
 	tii.CellSpacing = 0.5f;
 
 	mTerrain.Init(md3dDevice, md3dImmediateContext, tii);
+	std::cout << "터레인 초기화" << std::endl;
 	mWater.InitWater(md3dDevice, 320, 320, 5.0f);
+	std::cout << "물 초기화" << std::endl;
+
 	//---------Test-------------
-	//CGameObject::InitInfo oii;
-	//oii.FbxFileName = "crawler.fbx";
-	//oii.FbxTextureName = L"crawlerTexture.png";
-	//oii.Mat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	//oii.Mat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	//oii.Mat.Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
-	//oii.Pos = XMFLOAT3(0.0f, 0.0f, -100.0f);
-	//mPlayer.InitObject(md3dDevice, oii);
+	CGameObject::InitInfo info;
+	info.TextureName = L"Textures/WoodCrate01.dds";
+	info.Mat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	info.Mat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	info.Mat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	info.Pos = XMFLOAT3(0.0f, 0.0f, 150.0f);
+	mPlayer.InitObject(md3dDevice, info);
 
 	return true;
 }
@@ -165,7 +167,7 @@ void TerrainApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	//mPlayer.GetCamera()->SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 3000.0f);
+	mPlayer.GetCamera()->SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 }
 
 void TerrainApp::UpdateScene(float dt)
@@ -223,7 +225,7 @@ void TerrainApp::UpdateScene(float dt)
 
 	//if( GetAsyncKeyState('D') & 0x8000 )
 	//	mPlayer.GetCamera()->Strafe(10.0f*dt);
-	if (GetAsyncKeyState('W') & 0x8000)
+	/*if (GetAsyncKeyState('W') & 0x8000)
 		mCam.Walk(100.0f*dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
@@ -233,7 +235,7 @@ void TerrainApp::UpdateScene(float dt)
 		mCam.Strafe(-100.0f*dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCam.Strafe(100.0f*dt);
+		mCam.Strafe(100.0f*dt);*/
 	//cout << mCam.GetPosition().x << " " << mCam.GetPosition().y << " " << mCam.GetPosition().z << endl;
 	//
 	// Walk/fly mode
@@ -246,18 +248,19 @@ void TerrainApp::UpdateScene(float dt)
 	// 
 	// Clamp camera to terrain surface in walk mode.
 	//
-	if( mWalkCamMode )
-	{
-		//XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
-		XMFLOAT3 camPos = mCam.GetPosition();
-		float y = mTerrain.GetHeight(camPos.x, camPos.z) + 10.0f;
-		//mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
-		mCam.SetPosition(camPos.x, y + 2.0f, camPos.z);
-	}
+	//if( mWalkCamMode )
+	//{
+	//	//XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
+	//	XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
+	//	float y = mTerrain.GetHeight(camPos.x, camPos.z) + 10.0f;
+	//	//mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
+	//	mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
+	//}
 	//mPlayer.InputKeyboardMessage(dt);
-	//mPlayer.UpdateObject();
+	XMFLOAT3 PlayerPos = mPlayer.GetPosition();
+	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z) + 2.5f;
+	mPlayer.UpdateObject(dt, y);
 	//mPlayer.GetCamera()->UpdateViewMatrix();
-	mCam.UpdateViewMatrix();
 	mWater.UpdateWater(md3dImmediateContext, dt);
 }
 
@@ -269,21 +272,20 @@ void TerrainApp::DrawScene()
 	md3dImmediateContext->IASetInputLayout(InputLayouts::Basic32);
     md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	//mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
-
+	mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
 	if( GetAsyncKeyState('1') & 0x8000 )
 		md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 	//mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
-	mTerrain.Draw(md3dImmediateContext, mCam, mDirLights);
+	mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
 	md3dImmediateContext->RSSetState(0);
 
 	//mSky->Draw(md3dImmediateContext, *mPlayer.GetCamera());
-	mSky->Draw(md3dImmediateContext, mCam);
+	mSky->Draw(md3dImmediateContext, *mPlayer.GetCamera());
 
-	mWater.Draw(md3dImmediateContext, mCam, mDirLights);
+	mWater.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
 
 	// restore default states, as the SkyFX changes them in the effect file.
 	md3dImmediateContext->RSSetState(0);
@@ -316,8 +318,9 @@ void TerrainApp::OnMouseMove(WPARAM btnState, int x, int y)
 		//mPlayer.GetCamera()->Pitch(dy);
 		//mPlayer.GetCamera()->RotateY(dx);
 		//mPlayer.SetRotateAngle(dx);
-		mCam.Pitch(dy);
-		mCam.RotateY(dx);
+		//mPlayer.GetCamera()->Pitch(dy);
+		//mPlayer.GetCamera()->RotateY(dx);
+		mPlayer.RotateY(dx);
 	}
 
 	mLastMousePos.x = x;
