@@ -1,8 +1,0 @@
-﻿  fxc compile for debug: C:\Users\Administrator\Desktop\Dummy\더미클라\myBox\FX\color.fx
-  an error occurred while setting the initial search directory.
-  searches will be relative to the application's starting directory.
-  Microsoft (R) Direct3D Shader Compiler 9.29.952.3111
-  Copyright (C) Microsoft Corporation 2002-2009. All rights reserved.
-  
-  compilation failed; no code produced
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppCommon.targets(171,5): error MSB6006: "cmd.exe"이(가) 종료되었습니다(코드: 1).
