@@ -153,7 +153,7 @@ bool TerrainApp::Init()
 
 	//---------Test-------------
 	CGameObject::InitInfo info;
-	info.TextureName = L"Textures/WoodCrate01.dds";
+	info.TextureName = L"crawlerTexture.png";
 	info.Mat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	info.Mat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	info.Mat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
@@ -258,8 +258,8 @@ void TerrainApp::UpdateScene(float dt)
 	//}
 	//mPlayer.InputKeyboardMessage(dt);
 	XMFLOAT3 PlayerPos = mPlayer.GetPosition();
-	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z) + 2.5f;
-	mPlayer.UpdateObject(dt, y);
+	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z);
+	mPlayer.UpdateObject(md3dImmediateContext, dt, y);
 	//mPlayer.GetCamera()->UpdateViewMatrix();
 	mWater.UpdateWater(md3dImmediateContext, dt);
 }
