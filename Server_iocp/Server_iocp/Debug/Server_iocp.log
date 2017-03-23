@@ -1,0 +1,6 @@
+﻿  Server_iocp.cpp
+d:\mysteryisland\server_iocp\server_iocp\server_iocp.cpp(306): warning C4996: 'WSASocketA': Use WSASocketW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(3457): note: 'WSASocketA' 선언을 참조하십시오.
+d:\mysteryisland\server_iocp\server_iocp\server_iocp.cpp(440): warning C4800: 'BOOL': 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
+d:\mysteryisland\server_iocp\server_iocp\server_iocp.cpp(449): warning C4244: '=': 'DWORD'에서 'WORD'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  Server_iocp.vcxproj -> D:\MysteryIsland\Server_iocp\Debug\Server_iocp.exe

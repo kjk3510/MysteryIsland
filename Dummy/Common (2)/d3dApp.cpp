@@ -7,7 +7,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <Windows.h>
-#include "..\..\MysteryIsland\Dummy\myBox\protocol.h"
 
 #include "d3dApp.h"
 #include <WindowsX.h>
@@ -32,15 +31,6 @@ WSABUF send_buf;
 char send_buffer[BUFSIZE];
 WSABUF recv_buf;
 char recv_buffer[BUFSIZE];
-char packet_buffer[BUFSIZE];
-DWORD      in_packet_size = 0;
-int      saved_packet_size = 0;
-int      g_myid;
-
-int      g_left_x = 0;
-int     g_top_y = 0;
-
-sc_packet_put_player player;
 
 namespace
 {
@@ -53,6 +43,36 @@ namespace
 LRESULT CALLBACK
 MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	// ¿©º” √ ±‚»≠
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return 1;
+
+	// WSASocket(¡÷º“√º∞Ë, º“ƒœ≈∏¿‘, «¡∑Œ≈‰ƒ›, «¡∑Œ≈‰ƒ›¡§∫∏, ∏Ù∂Û, ∏Ù∂Û) <-> socket(¡÷º“√º∞Ë, º“ƒœ≈∏¿‘, «¡∑Œ≈‰ƒ›)
+	sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+	if (sock == INVALID_SOCKET) err_quit("socket()");
+
+	// WSAConnect(º“ƒœ, º≠πˆ¡÷º“, ¡÷º“≈©±‚, ∏Ù∂Û, ∏Ù∂Û, ∏Ù∂Û, ∏Ù∂Û) <-> connet(º“ƒœ, º≠πˆ¡÷º“, ¡÷º“≈©±‚)
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_port = htons(SERVERPORT);
+	int retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
+
+	printf("º≠πˆ¡¢º”");
+
+	// ≈¨∂Û¿Ãæ∆Æ¥¬ WSAAsyncSelect ∏µ®¿ª ªÁøÎ«œ¥¬∞‘ ¡¡¥Ÿ∞Ì µÈ¿Ω. ø÷ø¥¡ˆ?
+	WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
+
+	// º€ºˆΩ≈πˆ∆€ µÓ∑œ
+	send_buf.buf = send_buffer;
+	send_buf.len = BUFSIZE;
+	recv_buf.buf = recv_buffer;
+	recv_buf.len = BUFSIZE;
+
+	return 0;
+
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
 	return gd3dApp->MsgProc(hwnd, msg, wParam, lParam);
@@ -265,74 +285,6 @@ void err_display(char *msg)
 	printf("[%s] %s", msg, (char *)lpMsgBuf);
 	LocalFree(lpMsgBuf);
 }
-
-void ProcessPacket(char *ptr)
-{
-	static bool first_time = true;
-	switch (ptr[1])
-	{
-	case SC_PUT_PLAYER:
-	{
-		sc_packet_put_player *my_packet = reinterpret_cast<sc_packet_put_player *>(ptr);
-		int id = my_packet->id;
-		if (first_time) {
-			first_time = false;
-			g_myid = id;
-		}
-		if (id == g_myid) {
-			player.x = my_packet->x;
-			player.y = my_packet->y;
-		}
-		break;
-	}
-	case SC_POS:
-	{
-		sc_packet_pos *my_packet = reinterpret_cast<sc_packet_pos *>(ptr);
-		int other_id = my_packet->id;
-		if (other_id == g_myid) {
-			g_left_x = my_packet->x - 4;
-			g_top_y = my_packet->y - 4;
-			player.x = my_packet->x;
-			player.y = my_packet->y;
-		}
-		break;
-	}
-	default:
-		printf("Unknown PACKET type [%d]\n", ptr[1]);
-	}
-}
-
-void ReadPacket(SOCKET sock)
-{
-	DWORD iobyte, ioflag = 0;
-
-	int ret = WSARecv(sock, &recv_buf, 1, &iobyte, &ioflag, NULL, NULL);
-	if (ret) {
-		int err_code = WSAGetLastError();
-		printf("Recv Error [%d]\n", err_code);
-	}
-
-	BYTE *ptr = reinterpret_cast<BYTE *>(recv_buffer);
-
-	while (0 != iobyte) {
-		if (0 == in_packet_size) in_packet_size = ptr[0];
-		if (iobyte + saved_packet_size >= in_packet_size) {
-			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
-			ProcessPacket(packet_buffer);
-			ptr += in_packet_size - saved_packet_size;
-			iobyte -= in_packet_size - saved_packet_size;
-			in_packet_size = 0;
-			saved_packet_size = 0;
-		}
-		else {
-			memcpy(packet_buffer + saved_packet_size, ptr, iobyte);
-			saved_packet_size += iobyte;
-			iobyte = 0;
-		}
-		printf("%d, %d, %d, %d, %d\n", player.id, player.size, player.type,
-			player.x, player.y);
-	}
-}
  
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -457,6 +409,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
+<<<<<<< HEAD
 	case WM_KEYDOWN: {
 		int x = 0, y = 0;
 		if (wParam == VK_RIGHT)   x += 1;
@@ -481,11 +434,10 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			else my_packet->type = CS_UP;
 			WSASend(sock, &send_buf, 1, &iobyte, 0, NULL, NULL);
 		}
-
-
 	}
-					 break;
-
+	break;
+=======
+>>>>>>> parent of c6a9d8d... ÎçîÎØ∏ÌÅ¥Îùº ÌÇ§Í∞í Ï†ÑÏÜ°ÌôïÏù∏ / Ï°∏ÏûëÌÅ¥ÎùºÏóê Î∂ôÏù¥Îäî ÏûëÏóÖÏ§ë, ÎÇúÌï≠Í≤™ÎäîÏ§ë
 	case WM_SOCKET:
 	{
 		if (WSAGETSELECTERROR(lParam)) {
@@ -495,7 +447,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		switch (WSAGETSELECTEVENT(lParam)) {
 		case FD_READ:
-			ReadPacket((SOCKET)wParam);
+			//			ReadPacket((SOCKET)wParam);
 			break;
 		case FD_CLOSE:
 			closesocket((SOCKET)wParam);
@@ -506,6 +458,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
+
 
 bool D3DApp::InitMainWindow()
 {
@@ -543,41 +496,6 @@ bool D3DApp::InitMainWindow()
 
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
-
-	//ƒ‹º÷ «“¥Á
-	AllocConsole();   //ƒ‹º÷ «“¥Á
-	FILE *acStreamOut;
-	FILE *acStreamIn;
-	freopen_s(&acStreamOut, "CONOUT$", "wt", stdout);
-	freopen_s(&acStreamIn, "CONIN$", "r", stdin);
-
-	// ¿©º” √ ±‚»≠
-	WSADATA wsa;
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-		return 1;
-
-	// WSASocket(¡÷º“√º∞Ë, º“ƒœ≈∏¿‘, «¡∑Œ≈‰ƒ›, «¡∑Œ≈‰ƒ›¡§∫∏, ∏Ù∂Û, ∏Ù∂Û) <-> socket(¡÷º“√º∞Ë, º“ƒœ≈∏¿‘, «¡∑Œ≈‰ƒ›)
-	sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
-	if (sock == INVALID_SOCKET) err_quit("socket()");
-
-	// WSAConnect(º“ƒœ, º≠πˆ¡÷º“, ¡÷º“≈©±‚, ∏Ù∂Û, ∏Ù∂Û, ∏Ù∂Û, ∏Ù∂Û) <-> connet(º“ƒœ, º≠πˆ¡÷º“, ¡÷º“≈©±‚)
-	SOCKADDR_IN serveraddr;
-	ZeroMemory(&serveraddr, sizeof(serveraddr));
-	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
-	serveraddr.sin_port = htons(SERVERPORT);
-	int retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
-
-	printf("º≠πˆ¡¢º”");
-
-	// ≈¨∂Û¿Ãæ∆Æ¥¬ WSAAsyncSelect ∏µ®¿ª ªÁøÎ«œ¥¬∞‘ ¡¡¥Ÿ∞Ì µÈ¿Ω. ø÷ø¥¡ˆ?
-	WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
-
-	// º€ºˆΩ≈πˆ∆€ µÓ∑œ
-	send_buf.buf = send_buffer;
-	send_buf.len = BUFSIZE;
-	recv_buf.buf = recv_buffer;
-	recv_buf.len = BUFSIZE;
 
 	return true;
 }
