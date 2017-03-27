@@ -162,44 +162,46 @@ PatchTess ConstantHS(InputPatch<VertexOut, 4> patch, uint patchID : SV_Primitive
 	
 	float3 boxCenter  = 0.5f*(vMin + vMax);
 	float3 boxExtents = 0.5f*(vMax - vMin);
-	if( AabbOutsideFrustumTest(boxCenter, boxExtents, gWorldFrustumPlanes) )
+
+	if (AabbOutsideFrustumTest(boxCenter, boxExtents, gWorldFrustumPlanes))
 	{
 		pt.EdgeTess[0] = 0.0f;
 		pt.EdgeTess[1] = 0.0f;
 		pt.EdgeTess[2] = 0.0f;
 		pt.EdgeTess[3] = 0.0f;
-		
+
 		pt.InsideTess[0] = 0.0f;
 		pt.InsideTess[1] = 0.0f;
-		
+
 		return pt;
 	}
 	//
 	// Do normal tessellation based on distance.
 	//
-	else 
+	else
 	{
 		// It is important to do the tess factor calculation based on the
 		// edge properties so that edges shared by more than one patch will
 		// have the same tessellation factor.  Otherwise, gaps can appear.
-		
+
 		// Compute midpoint on edges, and patch center
 		float3 e0 = 0.5f*(patch[0].PosW + patch[2].PosW);
 		float3 e1 = 0.5f*(patch[0].PosW + patch[1].PosW);
 		float3 e2 = 0.5f*(patch[1].PosW + patch[3].PosW);
 		float3 e3 = 0.5f*(patch[2].PosW + patch[3].PosW);
 		float3  c = 0.25f*(patch[0].PosW + patch[1].PosW + patch[2].PosW + patch[3].PosW);
-		
+
 		pt.EdgeTess[0] = CalcTessFactor(e0);
 		pt.EdgeTess[1] = CalcTessFactor(e1);
 		pt.EdgeTess[2] = CalcTessFactor(e2);
 		pt.EdgeTess[3] = CalcTessFactor(e3);
-		
+
 		pt.InsideTess[0] = CalcTessFactor(c);
 		pt.InsideTess[1] = pt.InsideTess[0];
-	
+
 		return pt;
 	}
+
 }
 
 struct HullOut

@@ -51,6 +51,7 @@ private:
 	Terrain mTerrain;
 
 	DirectionalLight mDirLights[3];
+	PointLight mPointLight;
 
 	//Camera mCam;
 
@@ -89,8 +90,6 @@ TerrainApp::TerrainApp(HINSTANCE hInstance)
 	mLastMousePos.x = 0;
 	mLastMousePos.y = 0;
 
-	//mCam.SetPosition(0.0f, 2.0f, 100.0f);
-
 	mDirLights[0].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	mDirLights[0].Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	mDirLights[0].Specular = XMFLOAT4(0.8f, 0.8f, 0.7f, 1.0f);
@@ -105,6 +104,12 @@ TerrainApp::TerrainApp(HINSTANCE hInstance)
 	mDirLights[2].Diffuse  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[2].Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[2].Direction = XMFLOAT3(-0.57735f, -0.57735f, -0.57735f);
+
+	mPointLight.Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLight.Diffuse = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLight.Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
+	mPointLight.Att = XMFLOAT3(0.0f, 0.1f, 0.0f);
+	mPointLight.Range = 500.0f;
 }
 
 TerrainApp::~TerrainApp()
@@ -131,20 +136,21 @@ bool TerrainApp::Init()
 	mSky = new Sky(md3dDevice, L"Textures/grasscube1024.dds", 5000.0f);
 	std::cout << "스카이박스 초기화" << std::endl;
 	Terrain::InitInfo tii;
-	tii.HeightMapFilename = L"Textures/terrain.raw";
+	tii.HeightMapFilename = L"Textures/MysteryIsland.raw";
 	tii.LayerMapFilename0 = L"Textures/grass.dds";
 	tii.LayerMapFilename1 = L"Textures/darkdirt.dds";
 	tii.LayerMapFilename2 = L"Textures/stone.dds";
 	tii.LayerMapFilename3 = L"Textures/lightdirt.dds";
 	tii.LayerMapFilename4 = L"Textures/snow.dds";
 	tii.BlendMapFilename = L"Textures/blend.dds";
-	tii.HeightScale = 50.0f;
+	tii.HeightScale = 128.0f;
 	tii.HeightmapWidth = 2049;
 	tii.HeightmapHeight = 2049;
-	//tii.HeightScale = 128.0f;
-	//tii.HeightmapWidth = 1024;
-	//tii.HeightmapHeight = 1024;
 	tii.CellSpacing = 0.5f;
+	//tii.HeightScale = 650.0f;
+	//tii.HeightmapWidth = 2500;
+	//tii.HeightmapHeight = 2500;
+	//tii.CellSpacing = 0.5f;
 
 	mTerrain.Init(md3dDevice, md3dImmediateContext, tii);
 	std::cout << "터레인 초기화" << std::endl;
@@ -153,11 +159,11 @@ bool TerrainApp::Init()
 
 	//---------Test-------------
 	CGameObject::InitInfo info;
-	info.TextureName = L"crawlerTexture.png";
+	info.TextureName = L"Textures/WoodCrate01.dds";
 	info.Mat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	info.Mat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	info.Mat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
-	info.Pos = XMFLOAT3(0.0f, 0.0f, 150.0f);
+	info.Pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	mPlayer.InitObject(md3dDevice, info);
 
 	return true;
@@ -258,8 +264,8 @@ void TerrainApp::UpdateScene(float dt)
 	//}
 	//mPlayer.InputKeyboardMessage(dt);
 	XMFLOAT3 PlayerPos = mPlayer.GetPosition();
-	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z);
-	mPlayer.UpdateObject(md3dImmediateContext, dt, y);
+	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z) + 2.5f;
+	mPlayer.UpdateObject(dt, y);
 	//mPlayer.GetCamera()->UpdateViewMatrix();
 	mWater.UpdateWater(md3dImmediateContext, dt);
 }

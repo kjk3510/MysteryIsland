@@ -84,6 +84,9 @@ private:
 
 	std::vector<XMFLOAT2> mPatchBoundsY;
 	std::vector<float> mHeightmap;
+
+	//--
+	UINT mLandIndexCount;
 };
 
 #endif // TERRAIN_H

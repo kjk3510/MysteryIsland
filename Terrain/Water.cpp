@@ -9,7 +9,7 @@ mWidth(0), mDepth(0), mWavePos(0)
 	XMMATRIX I = XMMatrixIdentity();
 	XMStoreFloat4x4(&mWorld, I);
 	XMStoreFloat4x4(&mTexTransform, I);
-	mWorld._42 = -2.0f;
+	mWorld._42 = 7.0f;
 
 	mMat.Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mMat.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
