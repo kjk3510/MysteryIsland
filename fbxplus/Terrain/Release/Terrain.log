@@ -94,9 +94,13 @@ d:\dxsdk\include\xnamathmisc.inl(518): warning C4838: 'unsigned int'에서 'INT'
 d:\dxsdk\include\xnamathmisc.inl(519): warning C4838: 'unsigned int'에서 'INT'(으)로의 변환에는 축소 변환이 필요합니다.
 C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(17): warning C4005: '_WINSOCKAPI_': 매크로 재정의
   C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(17): note: 명령줄 인수: '_WINSOCKAPI_'의 이전 정의를 참조하십시오.
+..\Common\d3dApp.cpp(542): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(1850): note: 'inet_addr' 선언을 참조하십시오.
+..\Common\d3dApp.cpp(549): warning C4996: 'WSAAsyncSelect': Use WSAEventSelect() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(2699): note: 'WSAAsyncSelect' 선언을 참조하십시오.
   코드를 생성하고 있습니다.
-d:\mysteryisland\fbxplus\common\d3dapp.cpp(507): warning C4715: 'D3DApp::InitMainWindow': 모든 제어 경로에서 값을 반환하지는 않습니다.
-  3 of 1643 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+d:\mysteryisland\fbxplus\common\d3dapp.cpp(556): warning C4715: 'D3DApp::InitMainWindow': 모든 제어 경로에서 값을 반환하지는 않습니다.
+  3 of 1646 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.

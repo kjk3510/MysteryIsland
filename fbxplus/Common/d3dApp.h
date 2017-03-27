@@ -42,10 +42,10 @@ public:
 	virtual void OnMouseUp(WPARAM btnState, int x, int y)  { }
 	virtual void OnMouseMove(WPARAM btnState, int x, int y){ }
 	SOCKET sock;
-	WSAEVENT hEvent;
+	//WSAEVENT hEvent;
 
-	WSANETWORKEVENTS NetworkEvents;
-	int networkEvent;
+	//WSANETWORKEVENTS NetworkEvents;
+	//int networkEvent;
 
 protected:
 	bool InitMainWindow();

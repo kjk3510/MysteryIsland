@@ -86,7 +86,7 @@ void SendPacket(int id, unsigned char* packet) {
 
 	// 아래처럼 지역변수로 놔두면 안된다. 데이터 다 보내기도 전에 소멸되므로
 	// OverlapEx send_over;
-	std::cout << "센드패킷호출" << std::endl;
+	cout << "센드패킷호출" << endl;
 	OverlapEx* send_over = new OverlapEx;
 	memset(send_over, 0, sizeof(OverlapEx));			// 꼭 해줘야한다!!!!!!!!!!!
 	send_over->operation = OP_SEND;
@@ -103,7 +103,7 @@ void SendPacket(int id, unsigned char* packet) {
 		while (true);
 	}
 
-	std::cout << "센드패킷완료" << std::endl;
+	cout << "센드패킷완료" << endl;
 }
 
 void ProcessPacket(int now_ID, unsigned char * packet) {

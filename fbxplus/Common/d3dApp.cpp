@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <Windows.h>
+#include "..\..\Server_iocp\Server_iocp\Protocol.h"
 
 using namespace std;
 
@@ -23,26 +24,25 @@ void clienterror();
 void ReadPacket(SOCKET sock);
 void ProcessPacket(char *ptr);
 
-//HWND handle = NULL; // 윈도우핸들
-//
-//DWORD      in_packet_size = 0;
-//int      saved_packet_size = 0;
-//int g_myid;
-//
-//WSABUF send_buf;
-//char send_buffer[BUFSIZ];
-//WSABUF recv_buf;
-//char recv_buffer[BUFSIZ];
-//char packet_buffer[BUFSIZ];
-//void ReadPacket(SOCKET sock);
-//void ProcessPacket(char *ptr);
+HWND main_handle = NULL; // 윈도우핸들
+HINSTANCE main_instance = NULL; // 인스턴스
+
+DWORD      in_packet_size = 0;
+int      saved_packet_size = 0;
+int g_myid;
+
+WSABUF send_buf;
+char send_buffer[BUFSIZ];
+WSABUF recv_buf;
+char recv_buffer[BUFSIZ];
+char packet_buffer[BUFSIZ];
 
 int g_x = 0;
 int g_y = 0;
 int g_z = 0;
 
-//#define WM_SOCKET		WM_USER + 1
-//#define SERVERIP "127.0.0.1"
+#define WM_SOCKET		WM_USER + 1
+#define SERVERIP "127.0.0.1"
 
 namespace
 {
@@ -50,6 +50,56 @@ namespace
 	// procedure to our member function window procedure because we cannot
 	// assign a member function to WNDCLASS::lpfnWndProc.
 	D3DApp* gd3dApp = 0;
+}
+
+void ProcessPacket(char *ptr)
+{
+	cout << "패킷조립, 메시지 읽기" << endl;
+	static bool first_time = true;
+	switch (ptr[1])
+	{
+	case SC_PUT_PLAYER:
+	{
+		cout << "풋풀레이어 받았니" << endl;
+		break;
+	}
+	default:
+		printf("Unknown PACKET type [%d]\n", ptr[1]);
+	}
+	cout << "패킷메시지 읽기 완료" << endl;
+}
+
+void ReadPacket(SOCKET sock)
+{
+	DWORD iobyte, ioflag = 0;
+
+	int retval = WSARecv(sock, &recv_buf, 1, &iobyte, &ioflag, NULL, NULL);
+	if (retval) {
+		int err_code = WSAGetLastError();
+		printf("Recv Error [%d]\n", err_code);
+	}
+
+	BYTE *ptr = reinterpret_cast<BYTE *>(recv_buffer);
+
+	while (0 != iobyte) {
+		cout << "와일문은 도니?" << endl;
+		if (0 == in_packet_size) in_packet_size = ptr[0];
+		if (iobyte + saved_packet_size >= in_packet_size) {
+			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
+			cout << "프로세스패킷함수 부르니?" << endl;
+			ProcessPacket(packet_buffer);
+			cout << "불렀구나" << endl;
+			ptr += in_packet_size - saved_packet_size;
+			iobyte -= in_packet_size - saved_packet_size;
+			in_packet_size = 0;
+			saved_packet_size = 0;
+		}
+		else {
+			memcpy(packet_buffer + saved_packet_size, ptr, iobyte);
+			saved_packet_size += iobyte;
+			iobyte = 0;
+		}
+	}
 }
 
 LRESULT CALLBACK
@@ -407,9 +457,8 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 					 break;*/
-	/*case WM_SOCKET: 
+	case WM_SOCKET: 
 	{
-		std::cout << "efaef" << std::endl;
 		if (WSAGETSELECTERROR(lParam)) {
 			closesocket((SOCKET)wParam);
 			clienterror();
@@ -417,16 +466,14 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		switch (WSAGETSELECTEVENT(lParam)) {
 		case FD_READ:
-			std::cout << "efaef" << std::endl;
 			ReadPacket((SOCKET)wParam);
-			std::cout << "efaef" << std::endl;
 			break;
 		case FD_CLOSE:
 			closesocket((SOCKET)wParam);
 			clienterror();
 			break;
 		}
-	 }*/
+	 }
 	}
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -459,27 +506,6 @@ bool D3DApp::InitMainWindow()
 		return false;
 	}
 
-	//// 윈속 초기화
-	//WSADATA wsa;
-	//if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-	//	return 1;
-
-	//// WSASocket(주소체계, 소켓타입, 프로토콜, 프로토콜정보, 몰라, 몰라) <-> socket(주소체계, 소켓타입, 프로토콜)
-	//sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
-	//if (sock == INVALID_SOCKET) err_quit("socket()");
-
-	//WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
-
-	//// WSAConnect(소켓, 서버주소, 주소크기, 몰라, 몰라, 몰라, 몰라) <-> connet(소켓, 서버주소, 주소크기)
-	//SOCKADDR_IN serveraddr;
-	//ZeroMemory(&serveraddr, sizeof(serveraddr));
-	//serveraddr.sin_family = AF_INET;
-	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
-	//serveraddr.sin_port = htons(SERVERPORT);
-	//int retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
-
-	//std::cout << "connet complete" << std::endl;
-
 	// Compute window rectangle dimensions based on requested client area dimensions.
 	RECT R = { 0, 0, mClientWidth, mClientHeight };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
@@ -497,13 +523,36 @@ bool D3DApp::InitMainWindow()
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
 
-	
+	main_handle = mhMainWnd;
+	main_instance = mhAppInst;
+
+	// 윈속 초기화
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return 1;
+
+	// WSASocket(주소체계, 소켓타입, 프로토콜, 프로토콜정보, 몰라, 몰라) <-> socket(주소체계, 소켓타입, 프로토콜)
+	sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+	if (sock == INVALID_SOCKET) err_quit("socket()");
+
+	// WSAConnect(소켓, 서버주소, 주소크기, 몰라, 몰라, 몰라, 몰라) <-> connet(소켓, 서버주소, 주소크기)
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_port = htons(SERVERPORT);
+	int retval = WSAConnect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr), NULL, NULL, NULL, NULL);
+
+	std::cout << "connet complete" << std::endl;
 
 	// 클라이언트는 WSAAsyncSelect 모델을 사용하는게 좋다고 들음. 왜였지?
-	//WSAAsyncSelect(sock, handle, WM_SOCKET, FD_CLOSE | FD_READ);
+	WSAAsyncSelect(sock, main_handle, WM_SOCKET, FD_CLOSE | FD_READ);
 	std::cout << "asyncselect complete" << std::endl;
 
-//	return true;
+	send_buf.buf = send_buffer;
+	send_buf.len = BUFSIZ;
+	recv_buf.buf = recv_buffer;
+	recv_buf.len = BUFSIZ;
 }
 
 bool D3DApp::InitDirect3D()
@@ -639,19 +688,19 @@ void D3DApp::CalculateFrameStats()
 	}
 }
 
-//// 소켓 함수 오류 출력 후 종료
-//void err_quit(char *msg)
-//{
-//	LPVOID lpMsgBuf;
-//	FormatMessage(
-//		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-//		NULL, WSAGetLastError(),
-//		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-//		(LPTSTR)&lpMsgBuf, 0, NULL);
-//	MessageBox(NULL, (LPCTSTR)lpMsgBuf, TEXT("msg"), MB_ICONERROR);
-//	LocalFree(lpMsgBuf);
-//	exit(1);
-//}
+// 소켓 함수 오류 출력 후 종료
+void err_quit(char *msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, TEXT("msg"), MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
 
 // 소켓 함수 오류 출력
 void err_display(char *msg)
@@ -673,17 +722,19 @@ void clienterror()
 
 //void ProcessPacket(char *ptr)
 //{
+//	cout << "패킷조립, 메시지 읽기" << endl;
 //	static bool first_time = true;
 //	switch (ptr[1])
 //	{
 //	case SC_PUT_PLAYER:
 //	{
-//		cout << "asdf" << endl;
+//		cout << "풋풀레이어 받았니" << endl;
 //		break;
 //	}
 //	default:
 //		printf("Unknown PACKET type [%d]\n", ptr[1]);
 //	}
+//	cout << "패킷메시지 읽기 완료" << endl;
 //}
 //
 //void ReadPacket(SOCKET sock)
@@ -698,10 +749,13 @@ void clienterror()
 //	BYTE *ptr = reinterpret_cast<BYTE *>(recv_buffer);
 //
 //	while (0 != iobyte) {
+//		cout << "와일문은 도니?" << endl;
 //		if (0 == in_packet_size) in_packet_size = ptr[0];
 //		if (iobyte + saved_packet_size >= in_packet_size) {
 //			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
+//			cout << "프로세스패킷함수 부르니?" << endl;
 //			ProcessPacket(packet_buffer);
+//			cout << "불렀구나" << endl;
 //			ptr += in_packet_size - saved_packet_size;
 //			iobyte -= in_packet_size - saved_packet_size;
 //			in_packet_size = 0;
