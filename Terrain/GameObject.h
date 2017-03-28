@@ -55,7 +55,7 @@ public:
 	XMFLOAT3 GetPosition();
 	void InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo);
 	void UpdateObject(float dt, float height);
-	void DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3]);
+	void DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight);
 	void BuildGeometryBuffers(ID3D11Device* pd3dDevice);
 	void RotateY(float angle);
 	//void Move(XMFLOAT3 dir, float dt);

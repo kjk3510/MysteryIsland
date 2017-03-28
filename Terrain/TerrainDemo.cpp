@@ -105,11 +105,14 @@ TerrainApp::TerrainApp(HINSTANCE hInstance)
 	mDirLights[2].Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[2].Direction = XMFLOAT3(-0.57735f, -0.57735f, -0.57735f);
 
-	mPointLight.Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mPointLight.Ambient = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
 	mPointLight.Diffuse = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
 	mPointLight.Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
 	mPointLight.Att = XMFLOAT3(0.0f, 0.1f, 0.0f);
 	mPointLight.Range = 500.0f;
+	mPointLight.Position.x = 0.0f;
+	mPointLight.Position.z = 0.0f;
+	mPointLight.Position.y = 0.0f;
 }
 
 TerrainApp::~TerrainApp()
@@ -189,60 +192,6 @@ void TerrainApp::UpdateScene(float dt)
 	if (GetAsyncKeyState('Y') & 0x8000)
 		mDirLights[0].Specular.x += 0.1;
 	if (GetAsyncKeyState('H') & 0x8000)
-		mDirLights[0].Specular.x -= 0.1;
-
-	//if (GetAsyncKeyState('U') & 0x8000)
-	//	mDirLights[1].Ambient.x += 0.1;
-	//if (GetAsyncKeyState('J') & 0x8000)
-	//	mDirLights[1].Ambient.x -= 0.1;
-	//if (GetAsyncKeyState('I') & 0x8000)
-	//	mDirLights[1].Diffuse.x += 0.1;
-	//if (GetAsyncKeyState('K') & 0x8000)
-	//	mDirLights[1].Diffuse.x -= 0.1;
-	//if (GetAsyncKeyState('O') & 0x8000)
-	//	mDirLights[1].Specular.x += 0.1;
-	//if (GetAsyncKeyState('L') & 0x8000)
-	//	mDirLights[1].Specular.x -= 0.1;
-
-	//if (GetAsyncKeyState('Z') & 0x8000)
-	//	mDirLights[2].Ambient.x += 0.1;
-	//if (GetAsyncKeyState('X') & 0x8000)
-	//	mDirLights[2].Ambient.x -= 0.1;
-	//if (GetAsyncKeyState('C') & 0x8000)
-	//	mDirLights[2].Diffuse.x += 0.1;
-	//if (GetAsyncKeyState('V') & 0x8000)
-	//	mDirLights[2].Diffuse.x -= 0.1;
-	//if (GetAsyncKeyState('B') & 0x8000)
-	//	mDirLights[2].Specular.x += 0.1;
-	//if (GetAsyncKeyState('N') & 0x8000)
-	//	mDirLights[2].Specular.x -= 0.1;
-
-	//
-	// Control the camera.
-	//
-	//if( GetAsyncKeyState('W') & 0x8000 )
-	//	mPlayer.GetCamera()->Walk(10.0f*dt);
-
-	//if( GetAsyncKeyState('S') & 0x8000 )
-	//	mPlayer.GetCamera()->Walk(-10.0f*dt);
-
-	//if( GetAsyncKeyState('A') & 0x8000 )
-	//	mPlayer.GetCamera()->Strafe(-10.0f*dt);
-
-	//if( GetAsyncKeyState('D') & 0x8000 )
-	//	mPlayer.GetCamera()->Strafe(10.0f*dt);
-	/*if (GetAsyncKeyState('W') & 0x8000)
-		mCam.Walk(100.0f*dt);
-
-	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-100.0f*dt);
-
-	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.Strafe(-100.0f*dt);
-
-	if (GetAsyncKeyState('D') & 0x8000)
-		mCam.Strafe(100.0f*dt);*/
-	//cout << mCam.GetPosition().x << " " << mCam.GetPosition().y << " " << mCam.GetPosition().z << endl;
 	//
 	// Walk/fly mode
 	//
@@ -251,18 +200,11 @@ void TerrainApp::UpdateScene(float dt)
 	if( GetAsyncKeyState('3') & 0x8000 )
 		mWalkCamMode = false;
 
-	// 
-	// Clamp camera to terrain surface in walk mode.
-	//
-	//if( mWalkCamMode )
-	//{
-	//	//XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
-	//	XMFLOAT3 camPos = mPlayer.GetCamera()->GetPosition();
-	//	float y = mTerrain.GetHeight(camPos.x, camPos.z) + 10.0f;
-	//	//mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
-	//	mPlayer.GetCamera()->SetPosition(camPos.x, y + 2.0f, camPos.z);
-	//}
-	//mPlayer.InputKeyboardMessage(dt);
+	//mPointLight.Position.x = 70.0f*cosf(0.2f*mTimer.TotalTime());
+	//mPointLight.Position.z = 70.0f*sinf(0.2f*mTimer.TotalTime());
+	//mPointLight.Position.y = MathHelper::Max(mTerrain.GetHeight(mPointLight.Position.x,
+	//	mPointLight.Position.z), -3.0f) + 10.0f;
+
 	XMFLOAT3 PlayerPos = mPlayer.GetPosition();
 	float y = mTerrain.GetHeight(PlayerPos.x, PlayerPos.z) + 2.5f;
 	mPlayer.UpdateObject(dt, y);
@@ -278,13 +220,13 @@ void TerrainApp::DrawScene()
 	md3dImmediateContext->IASetInputLayout(InputLayouts::Basic32);
     md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
+	mPlayer.DrawObject(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights, mPointLight);
 
 	if( GetAsyncKeyState('1') & 0x8000 )
 		md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 	//mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
-	mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights);
+	mTerrain.Draw(md3dImmediateContext, *mPlayer.GetCamera(), mDirLights, mPointLight);
 
 	md3dImmediateContext->RSSetState(0);
 

@@ -104,7 +104,7 @@ void CPlayer::UpdateObject(float dt, float height)
 	mCam.UpdateViewMatrix();
 }
 
-void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3])
+void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight)
 {
 	UINT stride = sizeof(Vertex::Basic32);
 	UINT offset = 0;
@@ -133,6 +133,7 @@ void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
 		Effects::BasicFX->SetTexTransform(XMMatrixIdentity());
+		Effects::BasicFX->SetPointLight(&pointLight);
 		Effects::BasicFX->SetMaterial(mMat);
 		Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
 

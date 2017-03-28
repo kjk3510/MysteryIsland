@@ -138,7 +138,7 @@ void Terrain::Init(ID3D11Device* device, ID3D11DeviceContext* dc, const InitInfo
 		mInfo.BlendMapFilename.c_str(), 0, 0, &mBlendMapSRV, 0));
 }
 
-void Terrain::Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3])
+void Terrain::Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3], PointLight pointLight)
 {
 	//dc->IASetInputLayout(InputLayouts::Basic32);
 	//dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -197,7 +197,8 @@ void Terrain::Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight 
 	// Set per frame constants.
 	Effects::TerrainFX->SetViewProj(viewProj);
 	Effects::TerrainFX->SetEyePosW(cam.GetPosition());
-	Effects::TerrainFX->SetDirLights(lights);
+	//Effects::TerrainFX->SetDirLights(lights);
+	Effects::TerrainFX->SetPointLight(&pointLight);
 	Effects::TerrainFX->SetFogColor(Colors::Silver);
 	Effects::TerrainFX->SetFogStart(15.0f);
 	Effects::TerrainFX->SetFogRange(175.0f);

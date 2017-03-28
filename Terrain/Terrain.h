@@ -43,7 +43,7 @@ public:
 
 	void Init(ID3D11Device* device, ID3D11DeviceContext* dc, const InitInfo& initInfo);
 
-	void Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3]);
+	void Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight lights[3], PointLight pointLight);
 
 private:
 	void LoadHeightmap();
