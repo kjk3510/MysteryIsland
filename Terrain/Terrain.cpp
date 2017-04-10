@@ -197,7 +197,7 @@ void Terrain::Draw(ID3D11DeviceContext* dc, const Camera& cam, DirectionalLight 
 	// Set per frame constants.
 	Effects::TerrainFX->SetViewProj(viewProj);
 	Effects::TerrainFX->SetEyePosW(cam.GetPosition());
-	//Effects::TerrainFX->SetDirLights(lights);
+	Effects::TerrainFX->SetDirLights(lights);
 	Effects::TerrainFX->SetPointLight(&pointLight);
 	Effects::TerrainFX->SetFogColor(Colors::Silver);
 	Effects::TerrainFX->SetFogStart(15.0f);
@@ -260,6 +260,36 @@ void Terrain::LoadHeightmap()
 	{
 		mHeightmap[i] = (in[i] / 255.0f)*mInfo.HeightScale;
 	}
+	//mHeightmap.resize(mInfo.HeightmapHeight * mInfo.HeightmapWidth, 0);
+
+	//for (UINT x = 0; x < mInfo.HeightmapWidth; ++x)
+	//	for (UINT z = 0; z < mInfo.HeightmapHeight; ++z)
+	//		mHeightmap[x*z + z] = CreateTerrain(x, z);
+}
+
+float Terrain::CreateTerrain(int x, int z)
+{
+	float height = 0;
+
+	//if (z < 50)
+	//	height = z * 0.1f;
+	//if (z > 2000)
+	//	height = (z - 2000) * 0.1f;
+	//if (x < 50)
+	//	height = x * 0.1f;
+	//if (x > 2000)
+	//	height = (x - 2000) * 0.1f;
+
+	if (z < 50)
+		height =5;
+	if (z > 2000)
+		height = 5;
+	if (x < 50)
+		height = 5;
+	if (x > 2000)
+		height = 5;
+
+	return height;
 }
 
 void Terrain::Smooth()

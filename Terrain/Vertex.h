@@ -25,6 +25,14 @@ namespace Vertex
 		XMFLOAT2 Tex;
 		XMFLOAT2 BoundsY;
 	};
+	struct Particle
+	{
+		XMFLOAT3 InitialPos;
+		XMFLOAT3 InitialVel;
+		XMFLOAT2 Size;
+		float Age;
+		unsigned int Type;
+	};
 }
 
 class InputLayoutDesc
@@ -34,7 +42,7 @@ public:
 	static const D3D11_INPUT_ELEMENT_DESC Pos[1];
 	static const D3D11_INPUT_ELEMENT_DESC Basic32[3];
 	static const D3D11_INPUT_ELEMENT_DESC Terrain[3];
-	static const D3D11_INPUT_ELEMENT_DESC Fbx[3];
+	static const D3D11_INPUT_ELEMENT_DESC Particle[5];
 };
 
 class InputLayouts
@@ -46,7 +54,7 @@ public:
 	static ID3D11InputLayout* Pos;
 	static ID3D11InputLayout* Basic32;
 	static ID3D11InputLayout* Terrain;
-	static ID3D11InputLayout* Fbx;
+	static ID3D11InputLayout* Particle;
 };
 
 #endif // VERTEX_H

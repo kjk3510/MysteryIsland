@@ -47,6 +47,7 @@ public:
 
 private:
 	void LoadHeightmap();
+	float CreateTerrain(int x, int z);
 	void Smooth();
 	bool InBounds(int i, int j);
 	float Average(int i, int j);

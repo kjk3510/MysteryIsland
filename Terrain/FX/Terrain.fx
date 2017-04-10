@@ -37,6 +37,7 @@ cbuffer cbPerObject
 	// at center of world space.
 	
 	float4x4 gViewProj;
+	float4x4 gShadowTransform;
 	Material gMaterial;
 };
 
@@ -44,6 +45,7 @@ cbuffer cbPerObject
 Texture2DArray gLayerMapArray;
 Texture2D gBlendMap;
 Texture2D gHeightMap;
+Texture2D gShadowMap;
 
 SamplerState samLinear
 {
@@ -61,6 +63,17 @@ SamplerState samHeightmap
 	AddressV = CLAMP;
 };
 
+SamplerComparisonState samShadow
+{
+	Filter = COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	AddressW = BORDER;
+	BorderColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	ComparisonFunc = LESS;
+};
+
 struct VertexIn
 {
 	float3 PosL     : POSITION;
@@ -73,6 +86,7 @@ struct VertexOut
 	float3 PosW     : POSITION;
 	float2 Tex      : TEXCOORD0;
 	float2 BoundsY  : TEXCOORD1;
+	float4 ShadowPosH : TEXCOORD2;
 };
 
 VertexOut VS(VertexIn vin)
@@ -89,6 +103,9 @@ VertexOut VS(VertexIn vin)
 	// Output vertex attributes to next stage.
 	vout.Tex      = vin.Tex;
 	vout.BoundsY  = vin.BoundsY;
+
+	// Generate projective tex-coords to project shadow map onto scene.
+	vout.ShadowPosH = mul(float4(vin.PosL, 1.0f), gShadowTransform);
 	
 	return vout;
 }
@@ -209,6 +226,7 @@ struct HullOut
 {
 	float3 PosW     : POSITION;
 	float2 Tex      : TEXCOORD0;
+	float4 ShadowPosH : TEXCOORD1;
 };
 
 [domain("quad")]
@@ -226,6 +244,7 @@ HullOut HS(InputPatch<VertexOut, 4> p,
 	// Pass through shader.
 	hout.PosW     = p[i].PosW;
 	hout.Tex      = p[i].Tex;
+	hout.ShadowPosH = p[i].ShadowPosH;
 	
 	return hout;
 }
@@ -236,6 +255,7 @@ struct DomainOut
     float3 PosW     : POSITION;
 	float2 Tex      : TEXCOORD0;
 	float2 TiledTex : TEXCOORD1;
+	float4 ShadowPosH : TEXCOORD2;
 };
 
 // The domain shader is called for every vertex created by the tessellator.  
@@ -271,6 +291,7 @@ DomainOut DS(PatchTess patchTess,
 	
 	// Project to homogeneous clip space.
 	dout.PosH    = mul(float4(dout.PosW, 1.0f), gViewProj);
+	dout.ShadowPosH = quad[1].ShadowPosH;
 	
 	return dout;
 }
@@ -341,6 +362,10 @@ float4 PS(DomainOut pin,
 
 		float4 A, D, S;
 
+		// Only the first light casts a shadow.
+		float3 shadow = float3(1.0f, 1.0f, 1.0f);
+		shadow[0] = CalcShadowFactor(samShadow, gShadowMap, pin.ShadowPosH);
+
 		ComputePointLight(gMaterial, gPointLight, pin.PosW, normalW, toEye, A, D, S);
 		ambient += A;
 		diffuse += D;
@@ -355,6 +380,8 @@ float4 PS(DomainOut pin,
 				A, D, S);
 
 			ambient += A;
+			//diffuse += shadow[i] * D;
+			//spec    += shadow[i] * S;
 			diffuse += D;
 			spec    += S;
 		}

@@ -34,15 +34,12 @@ public:
 	virtual void BuildGeometryBuffers(ID3D11Device* pd3dDevice);
 };
 
-#define FRONT XMFLOAT3(0.0f, 0.0f, 1.0f)
-#define BACK  XMFLOAT3(0.0f, 0.0f, -1.0f)
-#define RIGHT XMFLOAT3(1.0f, 0.0f, 0.0f)
-#define LEFT  XMFLOAT3(-1.0f, 0.0f, 0.0f)
 
 class CPlayer : public CGameObject
 {
 private:
 	Camera mCam;
+	bool mFirstCamMode;
 	
 	float mMoveSpeed;
 	float mAngle;
@@ -52,16 +49,14 @@ public:
 	~CPlayer();
 
 	Camera* GetCamera() { return &mCam; };
+	XMFLOAT3 GetLookVector();
 	XMFLOAT3 GetPosition();
 	void InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo);
-	void UpdateObject(float dt, float height);
-	void DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight);
+	void UpdateObject(float dt, float playerHeight, float camHeight);
+	void DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight, XMFLOAT4X4 shadow);
+	void ShadowDraw(ID3D11DeviceContext* dc, XMFLOAT4X4 v, XMFLOAT4X4 p);
 	void BuildGeometryBuffers(ID3D11Device* pd3dDevice);
 	void RotateY(float angle);
-	//void Move(XMFLOAT3 dir, float dt);
-	//void InputKeyboardMessage(float dt);
-	//void SetRotateAngle(float angle) { mAngle = angle; }
-
-	//const XMFLOAT3 GetPos() { return XMFLOAT3(mWorld._41, mWorld._42, mWorld._43); }
+	void InitCamera();
 };
 

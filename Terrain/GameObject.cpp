@@ -54,7 +54,7 @@ void CGameObject::BuildGeometryBuffers(ID3D11Device* pd3dDevice)
 }
 
 
-CPlayer::CPlayer() : mMoveSpeed(1.0f), mAngle(0.0f)
+CPlayer::CPlayer() : mMoveSpeed(1.0f), mAngle(0.0f), mFirstCamMode(false)
 {
 
 }
@@ -74,42 +74,50 @@ void CPlayer::InitObject(ID3D11Device* pd3dDevice, const InitInfo& initInfo)
 	mCam.SetPosition(0.0f, 2.0f, 100.0f);
 }
 
-void CPlayer::UpdateObject(float dt, float height)
+void CPlayer::UpdateObject(float dt, float playerHeight, float camHeight)
 {
-	XMMATRIX W = XMLoadFloat4x4(&mWorld);
+	if (!mCam.GetLookAround())
+	{
+		XMMATRIX W = XMLoadFloat4x4(&mWorld);
 
-	if (GetAsyncKeyState('W') & 0x8000) {
-		//mCam.Walk(100.0f*dt);
-		XMMATRIX T = XMMatrixTranslation(0, 0, 100.0f*dt);
-		XMStoreFloat4x4(&mWorld, T*W);
+		if (GetAsyncKeyState('W') & 0x8000) {
+			XMMATRIX T = XMMatrixTranslation(0, 0, 100.0f*dt);
+			XMStoreFloat4x4(&mWorld, T*W);
+		}
+		if (GetAsyncKeyState('S') & 0x8000) {
+			XMMATRIX T = XMMatrixTranslation(0, 0, -100.0f*dt);
+			XMStoreFloat4x4(&mWorld, T*W);
+		}
+		if (GetAsyncKeyState('A') & 0x8000) {
+			XMMATRIX T = XMMatrixTranslation(-100.0f*dt, 0, 0);
+			XMStoreFloat4x4(&mWorld, T*W);
+		}
+		if (GetAsyncKeyState('D') & 0x8000) {
+			XMMATRIX T = XMMatrixTranslation(100.0f*dt, 0, 0);
+			XMStoreFloat4x4(&mWorld, T*W);
+		}
+		if (GetAsyncKeyState('2') & 0x0001) {
+			mFirstCamMode = !mFirstCamMode;
+		}
+
+		mWorld._42 = playerHeight;
+
+		(mFirstCamMode) ?
+			mCam.firstCamera(GetPosition(), GetLookVector(), playerHeight) :
+			mCam.ThirdCamera(GetPosition(), GetLookVector(), playerHeight, camHeight);
 	}
-	if (GetAsyncKeyState('S') & 0x8000) {
-		//mCam.Walk(-100.0f*dt);
-		XMMATRIX T = XMMatrixTranslation(0, 0, -100.0f*dt);
-		XMStoreFloat4x4(&mWorld, T*W);
-	}
-	if (GetAsyncKeyState('A') & 0x8000) {
-		//mCam.Strafe(-100.0f*dt);
-		XMMATRIX T = XMMatrixTranslation(-100.0f*dt, 0, 0);
-		XMStoreFloat4x4(&mWorld, T*W);
-	}
-	if (GetAsyncKeyState('D') & 0x8000) {
-		//mCam.Strafe(100.0f*dt);
-		XMMATRIX T = XMMatrixTranslation(100.0f*dt, 0, 0);
-		XMStoreFloat4x4(&mWorld, T*W);
-	}
-	mWorld._42 = height;
-	mCam.ThirdCamera(GetPosition());
-	mCam.SetPosition(mCam.GetPosition().x, height + 10.0f, mCam.GetPosition().z);
+
 	mCam.UpdateViewMatrix();
 }
 
-void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight)
+void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera& cam, DirectionalLight lights[3], PointLight pointLight, XMFLOAT4X4 shadow)
 {
 	UINT stride = sizeof(Vertex::Basic32);
 	UINT offset = 0;
 
 	float blendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	XMMATRIX shadowTransform = XMLoadFloat4x4(&shadow);
 
 	ID3DX11EffectTechnique* ObjectTech;
 	ObjectTech = Effects::BasicFX->Light2TexTech;
@@ -132,6 +140,7 @@ void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera
 		Effects::BasicFX->SetWorld(world);
 		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 		Effects::BasicFX->SetWorldViewProj(worldViewProj);
+		Effects::BasicFX->SetShadowTransform(world*shadowTransform);
 		Effects::BasicFX->SetTexTransform(XMMatrixIdentity());
 		Effects::BasicFX->SetPointLight(&pointLight);
 		Effects::BasicFX->SetMaterial(mMat);
@@ -141,38 +150,78 @@ void CPlayer::DrawObject(ID3D11DeviceContext* pd3dImmediateContext, const Camera
 		pd3dImmediateContext->DrawIndexed(36, 0, 0);
 	}
 
-	ID3DX11EffectTechnique* shadowTech;
-	shadowTech = Effects::BasicFX->Light3Tech;
+	//ID3DX11EffectTechnique* shadowTech;
+	//shadowTech = Effects::BasicFX->Light3Tech;
 
-	shadowTech->GetDesc(&techDesc);
+	//shadowTech->GetDesc(&techDesc);
+	//for (UINT p = 0; p < techDesc.Passes; ++p)
+	//{
+	//	ID3DX11EffectPass* pass = shadowTech->GetPassByIndex(p);
+
+	//	pd3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	//	pd3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+	//	XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
+	//	XMVECTOR toMainLight = -XMLoadFloat3(&lights[0].Direction);
+	//	XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
+	//	XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
+
+	//	XMMATRIX world = XMLoadFloat4x4(&mWorld)*S*shadowOffsetY;
+	//	XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+	//	XMMATRIX worldViewProj = world * mCam.ViewProj();
+
+	//	Effects::BasicFX->SetWorld(world);
+	//	Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+	//	Effects::BasicFX->SetWorldViewProj(worldViewProj);
+	//	Effects::BasicFX->SetMaterial(mShadowMat);
+
+	//	pd3dImmediateContext->OMSetDepthStencilState(RenderStates::NoDoubleBlendDSS, 0);
+	//	pass->Apply(0, pd3dImmediateContext);
+	//	pd3dImmediateContext->DrawIndexed(36, 0, 0);
+
+	//	// Restore default states.
+	//	pd3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
+	//	pd3dImmediateContext->OMSetDepthStencilState(0, 0);
+	//}
+}
+
+void CPlayer::ShadowDraw(ID3D11DeviceContext* dc, XMFLOAT4X4 v, XMFLOAT4X4 p)
+{
+	UINT stride = sizeof(Vertex::Basic32);
+	UINT offset = 0;
+
+	dc->RSSetState(0);
+
+	dc->IASetInputLayout(InputLayouts::Basic32);
+	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+	ID3DX11EffectTechnique* smapTech = Effects::BuildShadowMapFX->BuildShadowMapTech;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	smapTech->GetDesc(&techDesc);
+
+	XMMATRIX world;
+	XMMATRIX worldInvTranspose;
+	XMMATRIX worldViewProj;
+
+	XMMATRIX view = XMLoadFloat4x4(&v);
+	XMMATRIX proj = XMLoadFloat4x4(&p);
+
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		ID3DX11EffectPass* pass = shadowTech->GetPassByIndex(p);
+		// Draw the skull.
+		world = XMLoadFloat4x4(&mWorld);
+		worldInvTranspose = MathHelper::InverseTranspose(world);
+		worldViewProj = world*view*proj;
 
-		pd3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
-		pd3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+		Effects::BuildShadowMapFX->SetWorld(world);
+		Effects::BuildShadowMapFX->SetWorldInvTranspose(worldInvTranspose);
+		Effects::BuildShadowMapFX->SetWorldViewProj(worldViewProj);
+		Effects::BuildShadowMapFX->SetTexTransform(XMMatrixIdentity());
 
-		XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
-		XMVECTOR toMainLight = -XMLoadFloat3(&lights[0].Direction);
-		XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
-		XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
-
-		XMMATRIX world = XMLoadFloat4x4(&mWorld)*S*shadowOffsetY;
-		XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-		XMMATRIX worldViewProj = world * mCam.ViewProj();
-
-		Effects::BasicFX->SetWorld(world);
-		Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-		Effects::BasicFX->SetWorldViewProj(worldViewProj);
-		Effects::BasicFX->SetMaterial(mShadowMat);
-
-		pd3dImmediateContext->OMSetDepthStencilState(RenderStates::NoDoubleBlendDSS, 0);
-		pass->Apply(0, pd3dImmediateContext);
-		pd3dImmediateContext->DrawIndexed(36, 0, 0);
-
-		// Restore default states.
-		pd3dImmediateContext->OMSetBlendState(0, blendFactor, 0xffffffff);
-		pd3dImmediateContext->OMSetDepthStencilState(0, 0);
+		smapTech->GetPassByIndex(p)->Apply(0, dc);
+		dc->DrawIndexed(36, 0, 0);
 	}
 }
 
@@ -224,45 +273,31 @@ void CPlayer::RotateY(float angle)
 	XMMATRIX W = XMLoadFloat4x4(&mWorld);
 	XMStoreFloat4x4(&mWorld, R*W);
 
-	mCam.RevolvePlayer(angle, GetPosition());
-	//mCam.RotateY(angle);
+	mCam.RevolveYPlayer(angle);
 }
 
 XMFLOAT3 CPlayer::GetPosition()
 {
-	//XMMATRIX W = XMLoadFloat4x4(&mWorld);
-	//XMVECTOR P = XMVectorSet(0, 0, 0, 1);
-	//XMFLOAT3 Pos;
-	//XMStoreFloat3(&Pos, XMVector3TransformCoord(P, W));
-	//return Pos;
 	XMFLOAT3 Pos(mWorld._41, mWorld._42, mWorld._43);
 	return Pos;
 }
 
-//void CPlayer::Move(XMFLOAT3 dir, float dt)
-//{
-//	XMVECTOR s = XMVectorReplicate(dt * 10.0f);
-//	XMVECTOR l = XMLoadFloat3(&dir);
-//	//XMVECTOR p = XMLoadFloat3(&mPosition);
-//	//XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, l, p));
-//}
-//
-//void CPlayer::InputKeyboardMessage(float dt)
-//{
-//	if (GetAsyncKeyState('W') & 0x8000)
-//		Move(FRONT, dt);
-//
-//	if (GetAsyncKeyState('S') & 0x8000)
-//		Move(BACK, dt);
-//
-//	if (GetAsyncKeyState('A') & 0x8000)
-//		Move(LEFT, dt);
-//
-//	if (GetAsyncKeyState('D') & 0x8000)
-//		Move(RIGHT, dt);
-//}
-//
-//void RotateYObject(float angle)
-//{
-//
-//}
+XMFLOAT3 CPlayer::GetLookVector()
+{
+	XMVECTOR L = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMMATRIX W = XMLoadFloat4x4(&mWorld);
+	L = XMVector3TransformNormal(L, W);
+	XMFLOAT3 result;
+	XMStoreFloat3(&result, L);
+	return result;
+}
+
+void CPlayer::InitCamera()
+{
+	XMVECTOR pos = XMLoadFloat3(&GetPosition());
+	XMVECTOR look = XMLoadFloat3(&GetLookVector());
+	pos = pos - look * 50;
+	XMFLOAT3 p;
+	XMStoreFloat3(&p, pos);
+	mCam.LookAt(p, GetPosition(), XMFLOAT3(0.0f, 1.0f, 0.0f));
+}
